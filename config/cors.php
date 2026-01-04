@@ -20,7 +20,7 @@ return [
     'allowed_methods' => ['*'],
 
     'allowed_origins' => [
-        'https://app-aag9fvtenms.canva-apps.com',
+        'https://app-aag9yaskmye.canva-apps.com',
     ],
 
     'allowed_origins_patterns' => [],
