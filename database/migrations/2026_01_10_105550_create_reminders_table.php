@@ -11,12 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('quotes', function (Blueprint $table) {
+        Schema::create('reminders', function (Blueprint $table) {
             $table->id();
-            $table->text('quote');
-            $table->string('category')->nullable();
-            $table->enum('status', ['unused', 'posted'])->default('unused');
-            $table->softDeletes();
+            $table->date('date');
+            $table->timestamp('sent_at')->nullable();
             $table->timestamps();
         });
     }
@@ -26,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('quotes');
+        Schema::dropIfExists('reminders');
     }
 };

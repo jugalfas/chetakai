@@ -6,7 +6,6 @@ const props = defineProps({
     show: Boolean,
     quote: Object,
     categories: Array,
-    moods: Array,
 })
 
 const emit = defineEmits(['close'])
@@ -14,12 +13,12 @@ const emit = defineEmits(['close'])
 const form = ref({
     quote: '',
     category: '',
-    mood: '',
+    caption: '',
+    image: null,
 })
 
 // Refs for the v-select components
 const categorySelect = ref(null)
-const moodSelect = ref(null)
 const modalContentRef = ref(null) // Ref for the modal content div
 
 watch(
@@ -29,7 +28,8 @@ watch(
         form.value = {
             quote: q.quote,
             category: q.category,
-            mood: q.mood,
+            caption: q.post?.caption || '',
+            image: null,
         }
     },
     { immediate: true }
@@ -40,13 +40,19 @@ const closeOtherSelects = (currentSelectRef) => {
     if (categorySelect.value && categorySelect.value !== currentSelectRef) {
         categorySelect.value.searchEl.blur()
     }
-    if (moodSelect.value && moodSelect.value !== currentSelectRef) {
-        moodSelect.value.searchEl.blur()
-    }
 }
 
 const submit = () => {
-    router.put(route('quotes.update', props.quote.id), form.value, {
+    const formData = new FormData()
+    formData.append('quote', form.value.quote)
+    formData.append('category', form.value.category)
+    formData.append('caption', form.value.caption)
+    if (form.value.image) {
+        formData.append('image', form.value.image)
+    }
+    formData.append('_method', 'PUT')
+
+    router.post(route('quotes.update', props.quote.id), formData, {
         preserveScroll: true,
         onSuccess: () => emit('close'),
     })
@@ -74,41 +80,13 @@ watch(() => props.show, (newVal) => {
             </div>
 
             <div class="mb-4">
-                <label for="category" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
-                <v-select
-                    ref="categorySelect"
-                    :key="show"
-                    id="category"
-                    :options="categories"
-                    label="name"
-                    :reduce="category => category.name"
-                    v-model="form.category"
-                    placeholder="Select category"
-                    :clearable="false"
-                    class="w-full"
-                    style="width: 100% !important"
-                    @open="closeOtherSelects('category')"
-                    teleport="body"
-                />
+                <label for="caption" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Caption</label>
+                <textarea id="caption" v-model="form.caption" class="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-md shadow-sm p-2 h-24 resize-y" ></textarea>
             </div>
 
-            <div class="mb-6">
-                <label for="mood" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mood</label>
-                <v-select
-                    ref="moodSelect"
-                    :key="show"
-                    id="mood"
-                    :options="moods"
-                    label="name"
-                    :reduce="mood => mood.name"
-                    v-model="form.mood"
-                    placeholder="Select mood"
-                    :clearable="false"
-                    class="w-full"
-                    style="width: 100% !important"
-                    @open="closeOtherSelects('mood')"
-                    teleport="body"
-                />
+            <div class="mb-4">
+                <label for="image" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Image</label>
+                <input id="image" type="file" @change="form.image = $event.target.files[0]" accept="image/*" class="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-md shadow-sm p-2" />
             </div>
 
             <div class="flex justify-end gap-2">

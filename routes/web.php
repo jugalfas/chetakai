@@ -24,6 +24,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('quotes/generate', [QuoteController::class, 'generate'])->name('quotes.generate');
 
     Route::resource('quotes', QuoteController::class)->except(['show', 'create', 'edit']);
+    Route::post('quotes/{quote}/schedule', [QuoteController::class, 'schedule'])->name('quotes.schedule');
 
     Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
     Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');

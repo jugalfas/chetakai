@@ -3,13 +3,20 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Quote extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'quote',
         'category',
-        'mood',
         'status',
     ];
+
+    public function post()
+    {
+        return $this->hasOne(Post::class);
+    }
 }
