@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { XMarkIcon } from '@heroicons/vue/24/outline';
 
 const props = defineProps({
     show: {
@@ -70,54 +71,64 @@ const maxWidthClass = computed(() => {
         lg: 'sm:max-w-lg',
         xl: 'sm:max-w-xl',
         '2xl': 'sm:max-w-2xl',
+        '3xl': 'sm:max-w-3xl',
+        '4xl': 'sm:max-w-4xl',
+        '5xl': 'sm:max-w-5xl',
     }[props.maxWidth];
 });
 </script>
 
 <template>
-    <dialog
-        class="z-50 m-0 min-h-full min-w-full overflow-y-auto bg-transparent backdrop:bg-transparent"
-        ref="dialog"
-    >
-        <div
-            class="fixed inset-0 z-50 overflow-y-auto px-4 py-6 sm:px-0"
-            scroll-region
+    <Teleport to="body">
+        <Transition
+            enter-active-class="ease-out duration-300"
+            enter-from-class="opacity-0"
+            enter-to-class="opacity-100"
+            leave-active-class="ease-in duration-200"
+            leave-from-class="opacity-100"
+            leave-to-class="opacity-0"
         >
-            <Transition
-                enter-active-class="ease-out duration-300"
-                enter-from-class="opacity-0"
-                enter-to-class="opacity-100"
-                leave-active-class="ease-in duration-200"
-                leave-from-class="opacity-100"
-                leave-to-class="opacity-0"
-            >
-                <div
-                    v-show="show"
-                    class="fixed inset-0 transform transition-all"
-                    @click="close"
-                >
-                    <div
-                        class="absolute inset-0 bg-gray-500 opacity-75"
-                    />
-                </div>
-            </Transition>
+            <!-- Backdrop -->
+            <div
+                v-if="show"
+                class="fixed inset-0 z-50 bg-gray-500/75 dark:bg-gray-900/75 transition-opacity"
+                @click="close"
+            />
+        </Transition>
 
-            <Transition
-                enter-active-class="ease-out duration-300"
-                enter-from-class="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                enter-to-class="opacity-100 translate-y-0 sm:scale-100"
-                leave-active-class="ease-in duration-200"
-                leave-from-class="opacity-100 translate-y-0 sm:scale-100"
-                leave-to-class="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+        <Transition
+            enter-active-class="ease-out duration-300"
+            enter-from-class="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+            enter-to-class="opacity-100 translate-y-0 sm:scale-100"
+            leave-active-class="ease-in duration-200"
+            leave-from-class="opacity-100 translate-y-0 sm:scale-100"
+            leave-to-class="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+        >
+            <!-- Modal panel -->
+            <div
+                v-if="show"
+                class="fixed inset-0 z-50 overflow-y-auto"
+                role="dialog"
+                aria-modal="true"
             >
-                <div
-                    v-show="show"
-                    class="mb-6 transform overflow-hidden rounded-lg bg-white shadow-xl transition-all sm:mx-auto sm:w-full"
-                    :class="maxWidthClass"
-                >
-                    <slot v-if="showSlot" />
+                <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+                    <div
+                        class="relative transform overflow-hidden rounded-lg bg-white dark:bg-gray-800 text-left shadow-xl transition-all sm:my-8 w-full"
+                        :class="maxWidthClass"
+                    >
+                        <!-- Close button -->
+                        <button
+                            v-if="closeable"
+                            @click="close"
+                            class="absolute right-4 top-4 z-10 rounded-md bg-white dark:bg-gray-800 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                        >
+                            <XMarkIcon class="h-6 w-6" />
+                        </button>
+
+                        <slot v-if="showSlot" />
+                    </div>
                 </div>
-            </Transition>
-        </div>
-    </dialog>
+            </div>
+        </Transition>
+    </Teleport>
 </template>
