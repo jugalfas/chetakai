@@ -68,7 +68,7 @@ const navigation = [
                     />
                     <span
                         v-if="!isCollapsed"
-                        class="ml-3 text-lg font-semibold text-white"
+                        class="ml-3 text-lg font-semibold text-black dark:text-white"
                     >
                         {{ $page.props.app?.name || 'ChetakAI' }}
                     </span>
@@ -96,9 +96,7 @@ const navigation = [
                                         :is="item.icon"
                                         :class="[
                                             'h-4 w-4 shrink-0',
-                                            item.current
-                                                ? 'text-white'
-                                                : 'text-gray-400 group-hover:text-white'
+                                            'text-gray-400 group-hover:text-white'
                                         ]"
                                     />
                                     <span v-if="!isCollapsed">{{ item.name }}</span>

@@ -4,6 +4,8 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\QuoteController;
+use App\Models\Post;
+use App\Models\Quote;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -19,6 +21,8 @@ Route::get('/', function () {
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/chat', [ChatController::class, 'index'])->name('chat.index');
+    Route::post('/chat', [ChatController::class, 'store'])->name('chat.store');
+    Route::get('/chat/{id}', [ChatController::class, 'show'])->name('chat.show');
     Route::post('/chat/send', [ChatController::class, 'send'])->name('chat.send');
 
     Route::post('quotes/generate', [QuoteController::class, 'generate'])->name('quotes.generate');
@@ -34,7 +38,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
+    $quotes = Quote::count();
+    $scheduledPosts = Post::where('status', 'scheduled')->count();
+    $postedPosts = Post::where('status', 'posted')->count();
+    return Inertia::render('Dashboard', [
+        'quotes' => $quotes,
+        'scheduledPosts' => $scheduledPosts,
+        'postedPosts' => $postedPosts,
+    ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {

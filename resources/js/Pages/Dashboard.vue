@@ -9,27 +9,27 @@ import {
     ShareIcon
 } from '@heroicons/vue/24/outline';
 
+const props = defineProps({
+    quotes: Number,
+    scheduledPosts: Number,
+    postedPosts: Number,
+});
+
 // Mock data - in a real app, this would come from props
 const stats = [
     {
         name: 'Total Quotes',
-        value: '2,847',
-        change: '+12.5%',
-        changeType: 'increase',
+        value: props.quotes,
         icon: SparklesIcon,
     },
     {
         name: 'Scheduled Posts',
-        value: '156',
-        change: '-4.3%',
-        changeType: 'decrease',
+        value: props.scheduledPosts,
         icon: CalendarDaysIcon,
     },
     {
         name: 'Posted on Instagram',
-        value: '78',
-        change: '+5.0%',
-        changeType: 'increase',
+        value: props.postedPosts,
         icon: ShareIcon,
     },
 ];
@@ -75,7 +75,7 @@ const categoryInsights = [
 
     <AuthenticatedLayout>
         <div class="mb-6 flex items-center justify-between">
-            <h1 class="text-3xl font-semibold text-white">Overview</h1>
+            <h1 class="text-3xl font-semibold text-black dark:text-white">Overview</h1>
         </div>
 
         <!-- Stats Grid -->
@@ -97,7 +97,7 @@ const categoryInsights = [
             </div>
         </div>
 
-        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" style="display: none;">
             <!-- Recent Activity -->
             <div class="mt-8 col-span-2">
                 <div class="bg-card shadow-sm ring-1 ring-border rounded-lg">
@@ -149,7 +149,7 @@ const categoryInsights = [
                     </div>
                 </div>
             </div>
-    
+
             <!-- Category Insights -->
             <div class="mt-8">
                 <div class="bg-card shadow-sm ring-1 ring-border rounded-lg">

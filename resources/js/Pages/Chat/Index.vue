@@ -1,25 +1,93 @@
 <script setup>
-import { ref, nextTick } from 'vue'
+import { ref, nextTick, watch, onMounted } from 'vue'
 import axios from 'axios'
-import { Head } from '@inertiajs/vue3'
+import { Head, router } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import { Send, Plus, Sparkles, MessageSquare, User, Bot } from 'lucide-vue-next'
+import { marked } from 'marked'
 
-const messages = ref([
-    { role: "assistant", content: "How can I help you today? I'm here to assist with quote generation, analysis, and more." }
-])
+// Configure marked for markdown parsing
+marked.setOptions({
+    breaks: true, // Convert line breaks to <br>
+    gfm: true, // GitHub Flavored Markdown
+})
+
+const props = defineProps({
+    conversations: {
+        type: Array,
+        default: () => []
+    },
+    selectedConversation: {
+        type: Object,
+        default: null
+    },
+    messages: {
+        type: Array,
+        default: () => []
+    }
+})
+
+const messages = ref(props.messages || [])
 const input = ref('')
-const conversationId = ref(null)
+const selectedConversationId = ref(props.selectedConversation?.id || null)
 const loading = ref(false)
+const conversations = ref(props.conversations || [])
+
+// Watch for prop changes (when navigating)
+watch(() => props.selectedConversation, (newConv) => {
+    selectedConversationId.value = newConv?.id || null
+}, { immediate: true })
+
+watch(() => props.messages, (newMessages) => {
+    messages.value = newMessages || []
+    nextTick(() => scrollToBottom())
+}, { immediate: true })
+
+watch(() => props.conversations, (newConvs) => {
+    conversations.value = newConvs || []
+}, { immediate: true })
+
+const selectConversation = async (conversationId) => {
+    if (selectedConversationId.value === conversationId) return
+
+    router.get('/chat', { conversation_id: conversationId }, {
+        preserveState: true,
+        preserveScroll: true,
+    })
+}
+
+const createNewChat = async () => {
+    try {
+        const response = await axios.post('/chat', {
+            title: 'New Chat'
+        })
+
+        // Refresh conversations list
+        router.reload({
+            only: ['conversations'],
+            preserveState: true,
+        })
+
+        // Select the new conversation
+        if (response.data.conversation) {
+            selectConversation(response.data.conversation.id)
+        }
+    } catch (e) {
+        console.error('Error creating new chat:', e)
+    }
+}
 
 const sendMessage = async () => {
     if (!input.value.trim() || loading.value) return
 
     const userMessage = input.value
 
+    // Add user message to UI immediately
     messages.value.push({
+        id: Date.now(), // Temporary ID
         role: 'user',
         content: userMessage,
+        created_at: new Date().toISOString()
     })
 
     input.value = ''
@@ -31,22 +99,39 @@ const sendMessage = async () => {
     try {
         const response = await axios.post('/chat/send', {
             message: userMessage,
-            conversation_id: conversationId.value,
+            conversation_id: selectedConversationId.value,
         })
 
+        // Add assistant response
         messages.value.push({
+            id: Date.now() + 1, // Temporary ID
             role: 'assistant',
             content: response.data.reply,
+            created_at: new Date().toISOString()
         })
 
-        if (response.data.conversation_id) {
-            conversationId.value = response.data.conversation_id
+        // Update conversation ID if it was a new conversation
+        if (response.data.conversation_id && !selectedConversationId.value) {
+            selectedConversationId.value = response.data.conversation_id
+            // Reload to get updated conversations list
+            router.reload({
+                only: ['conversations', 'selectedConversation', 'messages'],
+                preserveState: false,
+            })
+        } else {
+            // Just reload messages for current conversation
+            router.reload({
+                only: ['messages'],
+                preserveState: true,
+            })
         }
     } catch (e) {
-        console.log(e);
+        console.error('Error sending message:', e)
         messages.value.push({
+            id: Date.now() + 1,
             role: 'assistant',
             content: 'Something broke 💀 Try again.',
+            created_at: new Date().toISOString()
         })
     } finally {
         loading.value = false
@@ -59,6 +144,15 @@ const scrollToBottom = () => {
     const el = document.getElementById('chat-body')
     if (el) el.scrollTop = el.scrollHeight
 }
+
+const parseMarkdown = (text) => {
+    if (!text) return ''
+    return marked.parse(text)
+}
+
+onMounted(() => {
+    scrollToBottom()
+})
 </script>
 
 <template>
@@ -68,20 +162,33 @@ const scrollToBottom = () => {
         <div class="h-[calc(100vh-12rem)] flex gap-4">
             <!-- Sidebar - History -->
             <div class="w-64 hidden lg:flex flex-col gap-4">
-                <button class="w-full gap-2 border-sidebar-border bg-sidebar hover:bg-sidebar-accent justify-start h-11 px-4 py-2 rounded-md font-medium text-sidebar-foreground hover:text-sidebar-accent-foreground flex items-center">
+                <button
+                    @click="createNewChat"
+                    class="inline-flex items-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover-elevate active-elevate-2 border shadow-xs active:shadow-none min-h-9 px-4 py-2 w-full gap-2 border-sidebar-border bg-sidebar hover:bg-sidebar-accent justify-start h-11"
+                >
                     <Plus class="h-4 w-4" />
                     New Chat
                 </button>
                 <div class="flex-1 overflow-y-auto">
                     <div class="space-y-2">
                         <button
-                            v-for="chat in ['Quote Ideas: Success', 'Instagram Hook Generation', 'Category Research', 'Personal Branding']"
-                            :key="chat"
-                            class="w-full justify-start font-normal text-muted-foreground hover:text-foreground hover:bg-sidebar-accent px-3 py-2 h-auto text-sm rounded-md flex items-center"
+                            v-for="conversation in conversations"
+                            :key="conversation.id"
+                            @click="selectConversation(conversation.id)"
+                            :class="[
+                                'w-full justify-start font-normal text-muted-foreground hover:text-foreground hover:bg-sidebar-accent px-3 py-2 h-auto text-sm rounded-md flex items-center transition-colors',
+                                selectedConversationId === conversation.id ? 'bg-sidebar-accent text-foreground' : ''
+                            ]"
                         >
                             <MessageSquare class="h-4 w-4 mr-2 flex-shrink-0" />
-                            <span class="truncate">{{ chat }}</span>
+                            <span class="truncate flex-1">{{ conversation.title || 'Untitled Chat' }}</span>
+                            <span v-if="conversation.messages_count" class="text-xs text-muted-foreground ml-2">
+                                {{ conversation.messages_count }}
+                            </span>
                         </button>
+                        <p v-if="conversations.length === 0" class="text-sm text-muted-foreground px-3 py-2 text-center">
+                            No conversations yet. Start a new chat!
+                        </p>
                     </div>
                 </div>
             </div>
@@ -90,7 +197,7 @@ const scrollToBottom = () => {
             <div class="flex-1 flex flex-col bg-card border border-border rounded-xl overflow-hidden shadow-sm card-shadow">
                 <div id="chat-body" class="flex-1 overflow-y-auto p-4 sm:p-6">
                     <div class="max-w-3xl mx-auto space-y-8">
-                        <div v-if="messages.length === 1" class="flex flex-col items-center justify-center py-20 text-center animate-in fade-in zoom-in duration-500">
+                        <div v-if="messages.length === 0" class="flex flex-col items-center justify-center py-20 text-center animate-in fade-in zoom-in duration-500">
                             <div class="h-12 w-12 rounded-2xl bg-accent/20 flex items-center justify-center mb-6">
                                 <Sparkles class="h-6 w-6 text-accent" />
                             </div>
@@ -101,8 +208,8 @@ const scrollToBottom = () => {
                         </div>
 
                         <div
-                            v-for="(msg, i) in messages"
-                            :key="i"
+                            v-for="msg in messages"
+                            :key="msg.id || msg.created_at"
                             class="flex gap-4"
                             :class="msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'"
                         >
@@ -119,7 +226,11 @@ const scrollToBottom = () => {
                                     ? 'bg-primary text-primary-foreground rounded-tr-none'
                                     : 'bg-sidebar-accent/50 text-foreground border border-sidebar-border rounded-tl-none'"
                             >
-                                {{ msg.content }}
+                                <div v-if="msg.role === 'assistant'"
+                                    class="markdown-content"
+                                    v-html="parseMarkdown(msg.content)"
+                                ></div>
+                                <span v-else>{{ msg.content }}</span>
                             </div>
                         </div>
 
