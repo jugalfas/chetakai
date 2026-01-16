@@ -130,8 +130,7 @@ const navigation = [
                             method="post"
                             as="button"
                             :class="[
-                                'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer',
-                                'text-gray-400 hover:bg-[#2D3A4F] hover:text-white',
+                                'inline-flex items-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover-elevate active-elevate-2 border border-transparent min-h-9 py-2 w-full justify-start text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent gap-3 px-3',
                                 isCollapsed ? 'justify-center px-2' : ''
                             ]"
                         >
