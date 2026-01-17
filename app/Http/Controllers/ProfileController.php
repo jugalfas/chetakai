@@ -19,6 +19,7 @@ class ProfileController extends Controller
     public function edit(Request $request): Response
     {
         return Inertia::render('Profile/Edit', [
+            'user' => $request->user(),
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => session('status'),
         ]);
@@ -36,6 +37,38 @@ class ProfileController extends Controller
         }
 
         $request->user()->save();
+
+        return Redirect::route('profile.edit');
+    }
+
+    /**
+     * Update the user's auto-post schedule setting.
+     */
+    public function updateAutoPostSchedule(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'enabled' => ['required', 'boolean'],
+        ]);
+
+        $request->user()->update([
+            'auto_post_schedule_enabled' => $request->boolean('enabled'),
+        ]);
+
+        return Redirect::route('profile.edit');
+    }
+
+    /**
+     * Update the user's post notifications setting.
+     */
+    public function updatePostNotifications(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'enabled' => ['required', 'boolean'],
+        ]);
+
+        $request->user()->update([
+            'post_notifications_enabled' => $request->boolean('enabled'),
+        ]);
 
         return Redirect::route('profile.edit');
     }

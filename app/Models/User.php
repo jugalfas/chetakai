@@ -19,9 +19,16 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
-        'name',
+        'first_name',
+        'last_name',
         'email',
         'password',
+        'instagram_username',
+        'instagram_account_type',
+        'instagram_connected',
+        'instagram_access_token',
+        'auto_post_schedule_enabled',
+        'post_notifications_enabled',
     ];
 
     /**
@@ -44,6 +51,9 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'instagram_connected' => 'boolean',
+            'auto_post_schedule_enabled' => 'boolean',
+            'post_notifications_enabled' => 'boolean',
         ];
     }
 

@@ -15,6 +15,10 @@ onMounted(() => {
 });
 
 defineProps({
+    type: {
+        type: String,
+        default: 'text',
+    },
     placeholder: String,
     disabled: {
         type: Boolean,
@@ -33,6 +37,7 @@ defineExpose({ focus: () => input.value.focus() });
     <input
         ref="input"
         v-model="model"
+        :type="type"
         :placeholder="placeholder"
         :disabled="disabled"
         :readonly="readonly"
