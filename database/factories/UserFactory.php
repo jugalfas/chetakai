@@ -24,11 +24,18 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => fake()->name(),
-            'email' => fake()->unique()->safeEmail(),
+            'first_name' => 'Jugal',
+            'last_name' => 'Faswala',
+            'email' => 'jugal@chetak.ai',
             'email_verified_at' => now(),
-            'password' => static::$password ??= Hash::make('password'),
-            'remember_token' => Str::random(10),
+            'password' => Hash::make('Jugal@7177'),
+            'instagram_username' => 'chetak_quotes',
+            'instagram_account_type' => 'Business Account',
+            'instagram_connected' => false,
+            'instagram_access_token' => NULL,
+            'auto_post_schedule_enabled' => true,
+            'post_notifications_enabled' => true,
+            'remember_token' => NULL,
         ];
     }
 

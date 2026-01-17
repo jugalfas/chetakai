@@ -13,10 +13,17 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            $table->string('first_name');
+            $table->string('last_name');
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->string('instagram_username')->nullable();
+            $table->string('instagram_account_type')->nullable();
+            $table->boolean('instagram_connected')->default(false);
+            $table->text('instagram_access_token')->nullable();
+            $table->boolean('auto_post_schedule_enabled')->default(false);
+            $table->boolean('post_notifications_enabled')->default(false);
             $table->rememberToken();
             $table->timestamps();
         });
