@@ -107,14 +107,6 @@
     .rounded-md {
         border-radius: calc(var(--radius));
     }
-    .space-y-1 > :not([hidden]) ~ :not([hidden]),
-    .space-y-2 > :not([hidden]) ~ :not([hidden]),
-    .space-y-3 > :not([hidden]) ~ :not([hidden]),
-    .space-y-4 > :not([hidden]) ~ :not([hidden]),
-    .space-y-5 > :not([hidden]) ~ :not([hidden]){
-        margin-top: 0 !important;
-        margin-bottom: 0 !important;
-    }
 }
 
 html,
@@ -294,4 +286,8 @@ input:where([type="radio"]):focus {
 input:where([type="checkbox"]),
 input:where([type="radio"]) {
     background-color: transparent;
+}
+
+.m-0 {
+    margin: 0 !important;
 }

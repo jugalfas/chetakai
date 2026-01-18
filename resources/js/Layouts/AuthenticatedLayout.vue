@@ -36,7 +36,7 @@ const toggleMobileMenu = () => {
         <div :class="['flex-1', isSidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64']">
             <!-- Top bar -->
             <Topbar
-                :user-name="$page.props.auth.user.name"
+                :user-name="$page.props.auth.user.first_name + ' ' + $page.props.auth.user.last_name"
                 :isSidebarCollapsed="isSidebarCollapsed"
                 @toggle-sidebar="toggleSidebar"
                 @toggle-mobile-menu="toggleMobileMenu"

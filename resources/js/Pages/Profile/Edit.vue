@@ -313,7 +313,7 @@ const togglePostNotifications = () => {
                                     posts.
                                 </div>
                             </div>
-                            <div class="p-6 pt-0 space-y-6">
+                            <div class="p-6 pt-0 space-y-8">
                                 <div
                                     class="flex items-center justify-between p-5 rounded-2xl border border-emerald-500/20 bg-emerald-500/5">
                                     <div class="flex items-center gap-4">
@@ -344,7 +344,7 @@ const togglePostNotifications = () => {
                                     <div class="flex items-center justify-between">
                                         <div class="space-y-1">
                                             <label class="peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-sm font-bold text-foreground">Auto-post Schedule</label>
-                                            <p class="text-xs text-muted-foreground">Automatically post scheduled
+                                            <p class="text-xs text-muted-foreground m-0">Automatically post scheduled
                                                 quotes.
                                             </p>
                                         </div>
@@ -360,9 +360,9 @@ const togglePostNotifications = () => {
                                         class="shrink-0 h-[1px] w-full bg-border">
                                     </div>
                                     <div class="flex items-center justify-between">
-                                        <div class="space-y-0.5">
-                                            <InputLabel value="Post Notifications" />
-                                            <p class="text-xs text-muted-foreground">Get notified when a post goes
+                                        <div class="space-y-1">
+                                            <label class="peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-sm font-bold text-foreground">Post Notifications</label>
+                                            <p class="text-xs text-muted-foreground m-0">Get notified when a post goes
                                                 live.</p>
                                         </div>
                                         <button type="button" role="switch" :aria-checked="postNotificationsEnabled"
@@ -379,37 +379,15 @@ const togglePostNotifications = () => {
 
                         <!-- Billing & Plan Tab -->
                         <div v-show="activeTab === 'billing'"
-                            class="rounded-xl border text-card-foreground border-border bg-card shadow-sm">
-                            <div class="flex flex-col space-y-1.5 p-6">
-                                <div class="font-semibold leading-none tracking-tight text-foreground">Billing &amp;
-                                    Plan</div>
-                                <div class="text-sm text-muted-foreground">Manage your subscription and billing
-                                    information.
-                                </div>
+                            class="rounded-xl border text-card-foreground border-border bg-card shadow-sm min-h-[400px] flex flex-col items-center justify-center text-center p-8">
+                            <div class="h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-credit-card h-8 w-8 text-muted-foreground" aria-hidden="true">
+                                    <rect width="20" height="14" x="2" y="5" rx="2"></rect>
+                                    <line x1="2" x2="22" y1="10" y2="10"></line>
+                                </svg>
                             </div>
-                            <div class="p-6 pt-0 space-y-6">
-                                <div
-                                    class="flex items-center justify-between p-6 rounded-xl border border-border bg-muted/5">
-                                    <div>
-                                        <p class="text-lg font-bold text-foreground">Free Plan</p>
-                                        <p class="text-sm text-muted-foreground mt-1">You're currently on the free plan
-                                        </p>
-                                    </div>
-                                    <PrimaryButton type="button" size="sm">
-                                        Upgrade Plan
-                                    </PrimaryButton>
-                                </div>
-                                <div class="space-y-4">
-                                    <div>
-                                        <InputLabel value="Payment Method" />
-                                        <p class="text-xs text-muted-foreground mt-1">No payment method on file</p>
-                                    </div>
-                                    <div>
-                                        <InputLabel value="Billing History" />
-                                        <p class="text-xs text-muted-foreground mt-1">No billing history available</p>
-                                    </div>
-                                </div>
-                            </div>
+                            <div class="font-semibold leading-none tracking-tight mb-2">This section is coming soon</div>
+                            <div class="text-sm text-muted-foreground">We're currently working on the Billing & Plan features.</div>
                         </div>
 
                         <!-- Security Tab -->
@@ -424,12 +402,12 @@ const togglePostNotifications = () => {
                             </div>
                             <form @submit.prevent="updatePassword" class="p-6 pt-0 space-y-6">
                                 <div class="space-y-4">
-                                    <div class="space-y-2">
+                                    <div class="space-y-2 mb-6">
                                         <InputLabel for="current_password" value="OLD PASSWORD" />
-                                        <div class="relative">
-                                            <TextInput id="current_password" ref="currentPasswordInput"
+                                        <div class="relative m-0">
+                                            <input id="current_password" ref="currentPasswordInput"
                                                 v-model="passwordForm.current_password"
-                                                :type="showCurrentPassword ? 'text' : 'password'" class="pr-10"
+                                                :type="showCurrentPassword ? 'text' : 'password'" class="flex w-full rounded-md border px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm bg-muted/10 border-border text-foreground h-11" placeholder="••••••••••"
                                                 autocomplete="current-password" />
                                             <button type="button" @click="toggleCurrentPasswordVisibility"
                                                 class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
@@ -458,71 +436,73 @@ const togglePostNotifications = () => {
                                         <InputError :message="passwordForm.errors.current_password" />
                                     </div>
 
-                                    <div class="space-y-2">
-                                        <InputLabel for="password" value="NEW PASSWORD" />
-                                        <div class="relative">
-                                            <TextInput id="password" ref="passwordInput" v-model="passwordForm.password"
-                                                :type="showPassword ? 'text' : 'password'" class="pr-10"
-                                                autocomplete="new-password" />
-                                            <button type="button" @click="togglePasswordVisibility"
-                                                class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
-                                                <svg v-if="showPassword" xmlns="http://www.w3.org/2000/svg" width="20"
-                                                    height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                                    class="lucide lucide-eye-off">
-                                                    <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path>
-                                                    <path
-                                                        d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68">
-                                                    </path>
-                                                    <path
-                                                        d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61">
-                                                    </path>
-                                                    <line x1="2" x2="22" y1="2" y2="22"></line>
-                                                </svg>
-                                                <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20"
-                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                                    class="lucide lucide-eye">
-                                                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
-                                                    <circle cx="12" cy="12" r="3"></circle>
-                                                </svg>
-                                            </button>
+                                    <div class="grid gap-6 sm:grid-cols-2">
+                                        <div class="space-y-2">
+                                            <InputLabel for="password" value="NEW PASSWORD" />
+                                            <div class="relative m-0">
+                                                <input id="password" ref="passwordInput" v-model="passwordForm.password"
+                                                    :type="showPassword ? 'text' : 'password'" class="flex w-full rounded-md border px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm bg-muted/10 border-border text-foreground h-11" placeholder="••••••••••"
+                                                    autocomplete="new-password" />
+                                                <button type="button" @click="togglePasswordVisibility"
+                                                    class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+                                                    <svg v-if="showPassword" xmlns="http://www.w3.org/2000/svg" width="20"
+                                                        height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                        class="lucide lucide-eye-off">
+                                                        <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path>
+                                                        <path
+                                                            d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68">
+                                                        </path>
+                                                        <path
+                                                            d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61">
+                                                        </path>
+                                                        <line x1="2" x2="22" y1="2" y2="22"></line>
+                                                    </svg>
+                                                    <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                                        viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                        class="lucide lucide-eye">
+                                                        <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
+                                                        <circle cx="12" cy="12" r="3"></circle>
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                            <InputError :message="passwordForm.errors.password" />
                                         </div>
-                                        <InputError :message="passwordForm.errors.password" />
-                                    </div>
 
-                                    <div class="space-y-2">
-                                        <InputLabel for="password_confirmation" value="CONFIRM NEW PASSWORD" />
-                                        <div class="relative">
-                                            <TextInput id="password_confirmation" ref="passwordConfirmationInput"
-                                                v-model="passwordForm.password_confirmation"
-                                                :type="showPasswordConfirmation ? 'text' : 'password'" class="pr-10"
-                                                autocomplete="new-password" />
-                                            <button type="button" @click="togglePasswordConfirmationVisibility"
-                                                class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
-                                                <svg v-if="showPasswordConfirmation" xmlns="http://www.w3.org/2000/svg"
-                                                    width="20" height="20" viewBox="0 0 24 24" fill="none"
-                                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                                    stroke-linejoin="round" class="lucide lucide-eye-off">
-                                                    <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path>
-                                                    <path
-                                                        d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68">
-                                                    </path>
-                                                    <path
-                                                        d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61">
-                                                    </path>
-                                                    <line x1="2" x2="22" y1="2" y2="22"></line>
-                                                </svg>
-                                                <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20"
-                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                                    class="lucide lucide-eye">
-                                                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
-                                                    <circle cx="12" cy="12" r="3"></circle>
-                                                </svg>
-                                            </button>
+                                        <div class="space-y-2">
+                                            <InputLabel for="password_confirmation" value="CONFIRM NEW PASSWORD" />
+                                            <div class="relative m-0">
+                                                <input id="password_confirmation" ref="passwordConfirmationInput"
+                                                    v-model="passwordForm.password_confirmation"
+                                                    :type="showPasswordConfirmation ? 'text' : 'password'" class="flex w-full rounded-md border px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm bg-muted/10 border-border text-foreground h-11" placeholder="••••••••••"
+                                                    autocomplete="new-password" />
+                                                <button type="button" @click="togglePasswordConfirmationVisibility"
+                                                    class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+                                                    <svg v-if="showPasswordConfirmation" xmlns="http://www.w3.org/2000/svg"
+                                                        width="20" height="20" viewBox="0 0 24 24" fill="none"
+                                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                        stroke-linejoin="round" class="lucide lucide-eye-off">
+                                                        <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path>
+                                                        <path
+                                                            d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68">
+                                                        </path>
+                                                        <path
+                                                            d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61">
+                                                        </path>
+                                                        <line x1="2" x2="22" y1="2" y2="22"></line>
+                                                    </svg>
+                                                    <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                                        viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                        class="lucide lucide-eye">
+                                                        <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
+                                                        <circle cx="12" cy="12" r="3"></circle>
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                            <InputError :message="passwordForm.errors.password_confirmation" />
                                         </div>
-                                        <InputError :message="passwordForm.errors.password_confirmation" />
                                     </div>
                                 </div>
 
