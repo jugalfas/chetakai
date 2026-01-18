@@ -43,11 +43,9 @@ const toggleMobileMenu = () => {
             />
 
             <!-- Main content area -->
-            <main class="flex-1">
-                <div class="py-6">
-                    <div class="mx-auto max-w-7xl animate-in fade-in slide-in-from-bottom-2 duration-500">
-                        <slot />
-                    </div>
+            <main class="flex-1 p-4 sm:p-6 lg:p-8 bg-background">
+                <div class="mx-auto max-w-7xl animate-in fade-in slide-in-from-bottom-2 duration-500">
+                    <slot />
                 </div>
             </main>
         </div>

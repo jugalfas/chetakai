@@ -101,6 +101,20 @@
     .card-shadow {
         box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
     }
+    .rounded-xl {
+        border-radius: calc(var(--radius) + 4px);
+    }
+    .rounded-md {
+        border-radius: calc(var(--radius));
+    }
+    .space-y-1 > :not([hidden]) ~ :not([hidden]),
+    .space-y-2 > :not([hidden]) ~ :not([hidden]),
+    .space-y-3 > :not([hidden]) ~ :not([hidden]),
+    .space-y-4 > :not([hidden]) ~ :not([hidden]),
+    .space-y-5 > :not([hidden]) ~ :not([hidden]){
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+    }
 }
 
 html,
@@ -259,24 +273,25 @@ body {
     background-color: hsl(var(--muted-foreground));
 }
 
-
 .focus\:ring-indigo-500:focus {
     --tw-ring-color: hsl(var(--primary)) !important;
 }
 
-input:where([type='checkbox']):checked,
-input:where([type='checkbox']):checked:hover,
-input:where([type='checkbox']):checked:focus,
-input:where([type='radio']):checked:hover,
-input:where([type='radio']):checked:focus{
+input:where([type="checkbox"]):checked,
+input:where([type="checkbox"]):checked:hover,
+input:where([type="checkbox"]):checked:focus,
+input:where([type="radio"]):checked:hover,
+input:where([type="radio"]):checked:focus {
     background-color: hsl(var(--primary)) !important;
 }
 
-input:where([type='checkbox']):focus, input:where([type='radio']):focus {
+input:where([type="checkbox"]):focus,
+input:where([type="radio"]):focus {
     outline: none;
     --tw-ring-offset-width: none;
 }
 
-input:where([type='checkbox']), input:where([type='radio']) {
+input:where([type="checkbox"]),
+input:where([type="radio"]) {
     background-color: transparent;
 }

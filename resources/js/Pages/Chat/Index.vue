@@ -246,7 +246,7 @@ onMounted(() => {
                             v-model="input"
                             type="text"
                             placeholder="Message Chetak AI..."
-                            class="w-full pr-12 h-12 bg-sidebar-accent/50 border border-sidebar-border rounded-md px-3 focus:outline-none focus:ring-2 focus:ring-accent"
+                            class="flex w-full rounded-md border px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm pr-12 h-12 bg-sidebar-accent/50 border-sidebar-border focus:ring-accent"
                             @keydown.enter="sendMessage"
                         />
                         <button

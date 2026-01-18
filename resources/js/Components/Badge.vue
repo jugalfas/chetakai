@@ -1,6 +1,6 @@
 <template>
     <span
-        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+        class="whitespace-nowrap inline-flex items-center rounded-md text-xs transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 hover-elevate border-transparent shadow-xs border-0 px-3 py-1 font-bold"
         :class="variantClasses"
     >
         <slot />
@@ -36,7 +36,7 @@ const variantClasses = computed(() => {
         default: 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200',
         primary: 'bg-primary-100 dark:bg-primary-900 text-primary-800 dark:text-primary-200',
         secondary: 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200',
-        success: 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200',
+        success: 'bg-emerald-500/20 text-emerald-500 hover:bg-emerald-500/20',
         warning: 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200',
         danger: 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200',
     };
