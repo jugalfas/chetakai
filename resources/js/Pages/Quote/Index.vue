@@ -1,269 +1,408 @@
 <script setup>
-import EditQuoteModal from '@/Components/EditQuoteModal.vue'
-import SchedulePostModal from '@/Components/SchedulePostModal.vue'
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
-import PrimaryButton from '@/Components/PrimaryButton.vue'
-import SecondaryButton from '@/Components/SecondaryButton.vue'
-import TextInput from '@/Components/TextInput.vue'
-import { Head, router } from '@inertiajs/vue3'
-import { ref, watch } from 'vue'
+import EditQuoteModal from "@/Components/EditQuoteModal.vue";
+import SchedulePostModal from "@/Components/SchedulePostModal.vue";
+import DeleteConfirmationModal from "@/Components/DeleteConfirmationModal.vue";
+import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
+import PrimaryButton from "@/Components/PrimaryButton.vue";
+import SecondaryButton from "@/Components/SecondaryButton.vue";
+import TextInput from "@/Components/TextInput.vue";
+import { Head, router } from "@inertiajs/vue3";
+import { ref, watch, computed } from "vue";
 import {
     TrashIcon,
     MagnifyingGlassIcon,
     PlusIcon,
     PencilIcon,
     CalendarDaysIcon,
-    EyeIcon
-} from '@heroicons/vue/24/outline'
-import Badge from '@/Components/Badge.vue'
+    EyeIcon,
+} from "@heroicons/vue/24/outline";
+import Badge from "@/Components/Badge.vue";
 
 const props = defineProps({
     quotes: Object,
     filters: Object,
     categories: Array,
-})
+});
 
-const search = ref(props.filters?.search || '')
+const search = ref(props.filters?.search || "");
+const currentStatus = ref(props.filters?.status || "all");
+const currentCategory = ref(props.filters?.category || "");
+const currentSort = ref(props.filters?.sort || "created_at");
+const showFiltersDropdown = ref(false);
 
 // Server-side search
 watch(search, (value) => {
     router.get(
-        route('quotes.index'),
-        { search: value },
-        { preserveState: true, replace: true }
-    )
-})
+        route("quotes.index"),
+        {
+            search: value,
+            status: currentStatus.value === "all" ? "" : currentStatus.value,
+            category: currentCategory.value,
+            sort: currentSort.value,
+        },
+        {
+            preserveState: true,
+            replace: true,
+        }
+    );
+});
 
-const showEditModal = ref(false)
-const showDeleteConfirmModal = ref(false)
-const showScheduleModal = ref(false)
-const selectedQuote = ref(null)
-const quoteToDelete = ref(null)
-const scheduleData = ref({})
+// Server-side status filter
+watch(currentStatus, (value) => {
+    router.get(
+        route("quotes.index"),
+        {
+            search: search.value,
+            status: value === "all" ? "" : value,
+            category: currentCategory.value,
+            sort: currentSort.value,
+        },
+        {
+            preserveState: true,
+            replace: true,
+        }
+    );
+});
+
+// Server-side category filter
+watch(currentCategory, (value) => {
+    router.get(
+        route("quotes.index"),
+        {
+            search: search.value,
+            status: currentStatus.value === "all" ? "" : currentStatus.value,
+            category: value,
+            sort: currentSort.value,
+        },
+        {
+            preserveState: true,
+            replace: true,
+        }
+    );
+});
+
+// Server-side sort
+watch(currentSort, (value) => {
+    router.get(
+        route("quotes.index"),
+        {
+            search: search.value,
+            status: currentStatus.value === "all" ? "" : currentStatus.value,
+            category: currentCategory.value,
+            sort: value,
+        },
+        {
+            preserveState: true,
+            replace: true,
+        }
+    );
+});
+
+// Computed status counts
+const statusCounts = computed(() => {
+    const quotes = props.quotes.data;
+    return {
+        all: quotes.length,
+        published: quotes.filter((q) => q.status === "published").length,
+        scheduled: quotes.filter((q) => q.status === "scheduled").length,
+        pending: quotes.filter((q) => q.status === "pending").length,
+        unused: quotes.filter((q) => q.status === "unused" || q.status === "draft").length, // Adjust based on actual status
+    };
+});
+
+// Computed category counts
+const categoryCounts = computed(() => {
+    const quotes = props.quotes.data;
+    const counts = {};
+    props.categories.forEach((category) => {
+        counts[category.id] = quotes.filter((q) => q.category_id === category.id).length;
+    });
+    return counts;
+});
+
+// Computed filter description for empty state
+const filterDescription = computed(() => {
+    if (currentCategory.value) {
+        const category = props.categories.find(c => c.id == currentCategory.value);
+        return `in the ${category?.name || 'selected'} category`;
+    } else if (currentStatus.value !== 'all') {
+        return `${currentStatus.value} quotes`;
+    } else {
+        return '';
+    }
+});
+
+const showEditModal = ref(false);
+const showDeleteConfirmModal = ref(false);
+const showScheduleModal = ref(false);
+const selectedQuote = ref(null);
+const quoteToDelete = ref(null);
+const scheduleData = ref({});
 
 // Initialize schedule data
-watch(() => props.quotes.data, (quotes) => {
-    quotes.forEach(quote => {
-        if (!scheduleData.value[quote.id]) {
-            scheduleData.value[quote.id] = { date: '', time: '20:00' }
-        }
-    })
-}, { immediate: true })
+watch(
+    () => props.quotes.data,
+    (quotes) => {
+        quotes.forEach((quote) => {
+            if (!scheduleData.value[quote.id]) {
+                scheduleData.value[quote.id] = {
+                    date: "",
+                    time: "20:00",
+                };
+            }
+        });
+    },
+    {
+        immediate: true,
+    }
+);
 
 const editQuote = (quote) => {
-    selectedQuote.value = quote
-    showEditModal.value = true
-}
+    selectedQuote.value = quote;
+    showEditModal.value = true;
+};
 
 const confirmQuoteDeletion = (quote) => {
-    quoteToDelete.value = quote
-    showDeleteConfirmModal.value = true
-}
+    quoteToDelete.value = quote;
+    showDeleteConfirmModal.value = true;
+};
 
 const deleteQuote = () => {
-    if (!quoteToDelete.value) return
+    if (!quoteToDelete.value) return;
 
-    router.delete(route('quotes.destroy', quoteToDelete.value.id), {
+    router.delete(route("quotes.destroy", quoteToDelete.value.id), {
         preserveScroll: true,
         onSuccess: () => {
-            showDeleteConfirmModal.value = false
-            quoteToDelete.value = null
+            showDeleteConfirmModal.value = false;
+            quoteToDelete.value = null;
         },
-    })
-}
+    });
+};
 
 const scheduleQuote = (quote) => {
-    selectedQuote.value = quote
-    showScheduleModal.value = true
-}
+    selectedQuote.value = quote;
+    showScheduleModal.value = true;
+};
 </script>
 
 <template>
+
     <Head title="Quotes" />
 
     <AuthenticatedLayout>
         <template #title>Quotes</template>
         <template #description>Manage your inspirational quotes and social media content</template>
 
-        <template #actions>
-            <PrimaryButton @click="router.visit(route('quotes.create'))">
-                <PlusIcon class="-ml-0.5 mr-1.5 h-5 w-5" />
-                New Quote
-            </PrimaryButton>
-        </template>
-
-        <!-- Search and Filters -->
-        <div class="bg-white dark:bg-gray-800 shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 rounded-lg">
-            <div class="px-4 py-5 sm:p-6">
-                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                    <div class="flex-1 min-w-0">
-                        <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" />
-                            </div>
-                            <TextInput
-                                v-model="search"
-                                placeholder="Search quotes..."
-                                class="pl-10"
-                            />
-                        </div>
-                    </div>
-                    <div class="mt-4 sm:mt-0 sm:ml-4">
-                        <SecondaryButton>
-                            <svg class="-ml-0.5 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
-                            </svg>
-                            Filters
-                        </SecondaryButton>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Quotes Grid -->
-        <div class="mt-8">
-            <div v-if="quotes.data.length === 0" class="text-center py-12">
-                <SparklesIcon class="mx-auto h-12 w-12 text-gray-400" />
-                <h3 class="mt-2 text-sm font-semibold text-gray-900 dark:text-white">No quotes</h3>
-                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                    Get started by creating your first inspirational quote.
-                </p>
-                <div class="mt-6">
-                    <PrimaryButton @click="router.visit(route('quotes.create'))">
-                        <PlusIcon class="-ml-0.5 mr-1.5 h-5 w-5" />
-                        New Quote
-                    </PrimaryButton>
+        <div class="space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h1 class="text-3xl font-bold tracking-tight text-foreground">Quotes</h1>
+                    <p class="text-muted-foreground mt-1">
+                        Manage and organize your quotes collection.
+                    </p>
                 </div>
             </div>
 
-            <div v-else class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                <div
-                    v-for="quote in quotes.data"
-                    :key="quote.id"
-                    class="bg-white dark:bg-gray-800 shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 rounded-lg overflow-hidden hover:shadow-md transition-shadow duration-200"
-                >
-                    <!-- Card Header -->
-                    <div class="px-4 py-5 sm:p-6">
-                        <div class="flex items-start justify-between">
-                            <div class="flex-1 min-w-0">
-                                <p class="text-lg font-serif italic text-gray-900 dark:text-white leading-relaxed">
-                                    "{{ quote.quote }}"
-                                </p>
-                                <p v-if="quote.post?.caption" class="mt-3 text-sm text-gray-600 dark:text-gray-400 font-serif italic">
-                                    {{ quote.post.caption }}
-                                </p>
-                            </div>
-                            <button
-                                @click="confirmQuoteDeletion(quote)"
-                                class="ml-4 p-1 rounded-full text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-200"
-                            >
-                                <TrashIcon class="h-5 w-5" />
-                            </button>
-                        </div>
-
-                        <!-- Meta Information -->
-                        <div class="mt-4 flex items-center justify-between">
-                            <div class="flex items-center space-x-2">
-                                <Badge variant="primary">{{ quote.category }}</Badge>
-                                <Badge
-                                    :variant="quote.status === 'published' ? 'success' : quote.status === 'draft' ? 'warning' : 'secondary'"
-                                    class="capitalize"
-                                >
-                                    {{ quote.status }}
-                                </Badge>
-                            </div>
-                        </div>
+            <div class="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+                <div class="flex bg-muted p-1 rounded-lg border border-border overflow-x-auto max-w-full">
+                    <button @click="currentStatus = 'all'" :class="[
+                        'px-4 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap',
+                        currentStatus === 'all'
+                            ? 'bg-background text-foreground shadow-sm'
+                            : 'text-muted-foreground hover:text-foreground'
+                    ]">
+                        All
+                        <span class="opacity-50 ml-1">({{ statusCounts.all }})</span>
+                    </button>
+                    <button @click="currentStatus = 'published'" :class="[
+                        'px-4 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap',
+                        currentStatus === 'published'
+                            ? 'bg-background text-foreground shadow-sm'
+                            : 'text-muted-foreground hover:text-foreground'
+                    ]">
+                        Published
+                        <span class="opacity-50 ml-1">({{ statusCounts.published }})</span>
+                    </button>
+                    <button @click="currentStatus = 'scheduled'" :class="[
+                        'px-4 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap',
+                        currentStatus === 'scheduled'
+                            ? 'bg-background text-foreground shadow-sm'
+                            : 'text-muted-foreground hover:text-foreground'
+                    ]">
+                        Scheduled
+                        <span class="opacity-50 ml-1">({{ statusCounts.scheduled }})</span>
+                    </button>
+                    <button @click="currentStatus = 'pending'" :class="[
+                        'px-4 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap',
+                        currentStatus === 'pending'
+                            ? 'bg-background text-foreground shadow-sm'
+                            : 'text-muted-foreground hover:text-foreground'
+                    ]">
+                        Pending
+                        <span class="opacity-50 ml-1">({{ statusCounts.pending }})</span>
+                    </button>
+                    <button @click="currentStatus = 'unused'" :class="[
+                        'px-4 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap',
+                        currentStatus === 'unused'
+                            ? 'bg-background text-foreground shadow-sm'
+                            : 'text-muted-foreground hover:text-foreground'
+                    ]">
+                        Unused
+                        <span class="opacity-50 ml-1">({{ statusCounts.unused }})</span>
+                    </button>
+                </div>
+                <div class="relative flex items-center gap-2 w-full lg:w-auto">
+                    <div class="relative flex-1 lg:w-64">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="lucide lucide-search absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground"
+                            aria-hidden="true">
+                            <path d="m21 21-4.34-4.34"></path>
+                            <circle cx="11" cy="11" r="8"></circle>
+                        </svg>
+                        <input v-model="search"
+                            class="flex w-full rounded-md border px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm pl-9 bg-card border-border focus:ring-accent h-9 text-foreground"
+                            placeholder="Search quotes..." />
                     </div>
-
-                    <!-- Card Footer -->
-                    <div class="bg-gray-50 dark:bg-gray-700/50 px-4 py-3 sm:px-6">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-2">
-                                <SecondaryButton size="sm" @click="editQuote(quote)">
-                                    <PencilIcon class="h-4 w-4" />
-                                    <span class="sr-only sm:not-sr-only sm:ml-1">Edit</span>
-                                </SecondaryButton>
-                                <SecondaryButton size="sm" @click="scheduleQuote(quote)" :disabled="!quote.post?.image_path">
-                                    <CalendarDaysIcon class="h-4 w-4" />
-                                    <span class="sr-only sm:not-sr-only sm:ml-1">
-                                        {{ quote.post?.status === 'scheduled' ? 'Reschedule' : 'Schedule' }}
-                                    </span>
-                                </SecondaryButton>
-                            </div>
-
-                            <!-- Scheduled Info -->
-                            <div v-if="quote.post?.status === 'scheduled'" class="text-xs text-gray-500 dark:text-gray-400">
-                                <div class="flex items-center">
-                                    <CalendarDaysIcon class="h-4 w-4 mr-1" />
-                                    {{ new Date(quote.post.scheduled_at).toLocaleDateString() }}
-                                </div>
-                            </div>
+                    <button @click="showFiltersDropdown = !showFiltersDropdown"
+                        class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 hover-elevate active-elevate-2 border shadow-xs active:shadow-none h-9 w-9 border-border bg-card text-foreground"
+                        type="button">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="lucide lucide-funnel h-4 w-4" aria-hidden="true">
+                            <path
+                                d="M10 20a1 1 0 0 0 .553.895l2 1A1 1 0 0 0 14 21v-7a2 2 0 0 1 .517-1.341L21.74 4.67A1 1 0 0 0 21 3H3a1 1 0 0 0-.742 1.67l7.225 7.989A2 2 0 0 1 10 14z">
+                            </path>
+                        </svg>
+                    </button>
+                    <!-- Filters Dropdown -->
+                    <div v-show="showFiltersDropdown"
+                        class="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] min-w-[8rem] overflow-y-auto overflow-x-hidden rounded-md border p-1 shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 origin-[--radix-dropdown-menu-content-transform-origin] w-56 bg-popover border-border text-popover-foreground absolute top-full right-0 mt-1">
+                        <div class="px-2 py-1.5 text-sm font-semibold">Filter by Category</div>
+                        <div role="separator" aria-orientation="horizontal" class="-mx-1 my-1 h-px bg-border"></div>
+                        <div role="menuitem" @click="currentCategory = ''"
+                            class="relative select-none gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&amp;&gt;svg]:size-4 [&amp;&gt;svg]:shrink-0 flex items-center justify-between hover:bg-muted cursor-pointer"
+                            tabindex="-1" data-orientation="vertical" data-radix-collection-item="">All Categories <div
+                                class="whitespace-nowrap inline-flex items-center rounded-md px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 hover-elevate text-foreground border ml-2 bg-muted border-border">
+                                {{ statusCounts.all }}</div>
                         </div>
+                        <div v-for="category in props.categories" :key="category.id" role="menuitem" @click="currentCategory = category.id"
+                            class="relative select-none gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&amp;&gt;svg]:size-4 [&amp;&gt;svg]:shrink-0 flex items-center justify-between hover:bg-muted cursor-pointer"
+                            tabindex="-1" data-orientation="vertical" data-radix-collection-item="">{{ category.name }} <div
+                                class="whitespace-nowrap inline-flex items-center rounded-md px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 hover-elevate text-foreground border ml-2 bg-muted border-border">
+                                {{ categoryCounts[category.id] || 0 }}</div>
+                        </div>
+                        <div role="separator" aria-orientation="horizontal" class="-mx-1 my-1 h-px bg-border"></div>
+                        <div class="px-2 py-1.5 text-sm font-semibold">Sort by
+                        </div>
+                        <div role="menuitem" @click="currentSort = 'created_at'"
+                            class="relative flex select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&amp;&gt;svg]:size-4 [&amp;&gt;svg]:shrink-0 hover:bg-muted cursor-pointer"
+                            tabindex="-1" data-orientation="vertical" data-radix-collection-item="">Newest first</div>
+                        <div role="menuitem" @click="currentSort = 'updated_at'"
+                            class="relative flex select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&amp;&gt;svg]:size-4 [&amp;&gt;svg]:shrink-0 hover:bg-muted cursor-pointer"
+                            tabindex="-1" data-orientation="vertical" data-radix-collection-item="">Recently updated</div>
+                        <div role="menuitem" @click="currentSort = 'content'"
+                            class="relative flex select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&amp;&gt;svg]:size-4 [&amp;&gt;svg]:shrink-0 hover:bg-muted cursor-pointer"
+                            tabindex="-1" data-orientation="vertical" data-radix-collection-item="">Alphabetical</div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Pagination -->
-        <div v-if="quotes.data.length > 0" class="mt-8">
-            <nav class="flex items-center justify-between border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 sm:px-6 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700">
-                <div class="flex flex-1 justify-between sm:hidden">
-                    <SecondaryButton
-                        v-if="quotes.prev_page_url"
-                        @click="router.visit(quotes.prev_page_url, { preserveState: true })"
-                        size="sm"
-                    >
-                        Previous
-                    </SecondaryButton>
-                    <SecondaryButton
-                        v-if="quotes.next_page_url"
-                        @click="router.visit(quotes.next_page_url, { preserveState: true })"
-                        size="sm"
-                    >
-                        Next
-                    </SecondaryButton>
-                </div>
-                <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-                    <div>
-                        <p class="text-sm text-gray-700 dark:text-gray-300">
-                            Showing
-                            <span class="font-medium">{{ quotes.from }}</span>
-                            to
-                            <span class="font-medium">{{ quotes.to }}</span>
-                            of
-                            <span class="font-medium">{{ quotes.total }}</span>
-                            results
+            <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <!-- If no quote available -->
+                <div v-if="props.quotes.data.length === 0"
+                    class="col-span-full py-20 flex flex-col items-center justify-center text-center space-y-4">
+                    <div class="h-20 w-20 rounded-full bg-muted/30 flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="lucide lucide-quote h-10 w-10 text-muted-foreground/40" aria-hidden="true">
+                            <path
+                                d="M16 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z">
+                            </path>
+                            <path
+                                d="M5 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z">
+                            </path>
+                        </svg>
+                    </div>
+                    <div class="space-y-1 mb-4">
+                        <h3 class="text-xl font-bold text-foreground">No quotes found</h3>
+                        <p class="text-muted-foreground max-w-xs mx-auto">
+                            There are currently no {{ filterDescription ? filterDescription : 'quotes' }}.
                         </p>
                     </div>
-                    <div>
-                        <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
-                            <SecondaryButton
-                                v-for="link in quotes.links"
-                                :key="link.label"
-                                :disabled="!link.url"
-                                @click="link.url && router.visit(link.url, { preserveState: true })"
-                                :class="[
-                                    'relative inline-flex items-center px-3 py-2 text-sm font-semibold ring-1 ring-inset ring-gray-300 dark:ring-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 focus:z-20 focus:outline-offset-0',
-                                    link.active
-                                        ? 'bg-primary-600 text-white ring-primary-600 hover:bg-primary-700'
-                                        : 'text-gray-900 dark:text-gray-300',
-                                    link.label === 'Previous' ? 'rounded-l-md' : '',
-                                    link.label === 'Next' ? 'rounded-r-md' : '',
-                                    !link.url ? 'opacity-50 cursor-not-allowed' : ''
-                                ]"
-                                v-html="link.label"
-                            />
-                        </nav>
+                    <button
+                        @click="search = ''; currentStatus = 'all'; currentCategory = ''; currentSort = 'created_at'"
+                        class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 hover-elevate active-elevate-2 border shadow-xs active:shadow-none min-h-9 px-4 py-2 mt-4 border-accent/20 hover:bg-accent/10 text-accent font-bold">
+                        Clear Filters
+                    </button>
+                </div>
+
+                <!-- If quotes are available -->
+                <div v-for="quote in props.quotes.data" :key="quote.id"
+                    class="rounded-xl border text-card-foreground border-border bg-card hover:border-accent/50 transition-all group overflow-hidden shadow-sm">
+                    <div class="p-6 flex flex-col h-full min-h-[180px]">
+                        <div class="flex-1">
+                            <p class="text-base font-medium leading-relaxed italic text-foreground/90">"{{ quote.content
+                            }}"</p>
+                        </div>
+                        <div class="mt-6 flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="whitespace-nowrap inline-flex items-center rounded-md py-0.5 transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 hover-elevate border capitalize text-[10px] h-5 bg-muted border-border text-accent font-bold px-2">
+                                    {{ quote.category?.name || 'Uncategorized' }}</div>
+                                <div class="flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" :class="[
+                                            'h-3 w-3',
+                                            quote.status === 'pending' ? 'text-amber-500' :
+                                                quote.status === 'published' ? 'text-green-500' :
+                                                    quote.status === 'scheduled' ? 'text-blue-500' :
+                                                        'text-gray-500'
+                                        ]" aria-hidden="true">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <line v-if="quote.status === 'pending'" x1="12" x2="12" y1="8" y2="12"></line>
+                                        <line v-if="quote.status === 'pending'" x1="12" x2="12.01" y1="16" y2="16">
+                                        </line>
+                                        <path v-if="quote.status === 'published'" d="m9 12 2 2 4-4"></path>
+                                        <rect v-if="quote.status === 'scheduled'" width="18" height="18" x="3" y="4"
+                                            rx="2" ry="2"></rect>
+                                        <line v-if="quote.status === 'scheduled'" x1="16" x2="16" y1="2" y2="6"></line>
+                                        <line v-if="quote.status === 'scheduled'" x1="8" x2="8" y1="2" y2="6"></line>
+                                        <line v-if="quote.status === 'scheduled'" x1="3" x2="21" y1="10" y2="10"></line>
+                                    </svg><span class="capitalize">{{ quote.status }}</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <button @click="editQuote(quote)"
+                                    class="inline-flex items-center justify-center gap-2 whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 hover-elevate active-elevate-2 border border-transparent min-h-8 rounded-md px-3 h-7 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground">
+                                    Edit
+                                </button>
+                                <button @click="scheduleQuote(quote)"
+                                    class="inline-flex items-center justify-center gap-2 whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 hover-elevate active-elevate-2 border border-transparent min-h-8 rounded-md px-3 h-7 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground">
+                                    Schedule
+                                </button>
+                                <button @click="confirmQuoteDeletion(quote)"
+                                    class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 hover-elevate active-elevate-2 border border-transparent h-7 w-7 text-muted-foreground hover:text-red-500">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="lucide lucide-trash h-4 w-4" aria-hidden="true">
+                                        <path d="M3 6h18"></path>
+                                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </nav>
+            </div>
         </div>
 
         <!-- Modals -->
         <EditQuoteModal :show="showEditModal" :quote="selectedQuote" :categories="categories"
             @close="showEditModal = false" />
-        <SchedulePostModal :show="showScheduleModal" :quote="selectedQuote"
-            @close="showScheduleModal = false" />
+        <SchedulePostModal :show="showScheduleModal" :quote="selectedQuote" @close="showScheduleModal = false" />
         <DeleteConfirmationModal :show="showDeleteConfirmModal" title="Delete Quote"
             message="Are you sure you want to delete this quote? This action cannot be undone."
             @close="showDeleteConfirmModal = false" @confirm="deleteQuote" />

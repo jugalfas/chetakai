@@ -3,6 +3,7 @@ import { ref, computed } from 'vue';
 import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 import Sidebar from '@/Components/Sidebar.vue';
 import Topbar from '@/Components/Topbar.vue';
+import { Toaster } from 'sonner';
 
 const isSidebarCollapsed = ref(false);
 const isMobileMenuOpen = ref(false);
@@ -50,4 +51,5 @@ const toggleMobileMenu = () => {
             </main>
         </div>
     </div>
+    <Toaster />
 </template>
