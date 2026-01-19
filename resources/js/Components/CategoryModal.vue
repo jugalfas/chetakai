@@ -1,7 +1,7 @@
 <script setup>
 import { useForm } from '@inertiajs/vue3'
 import { watch } from 'vue'
-import { toast } from 'sonner'
+import { toast } from 'vue-sonner'
 
 const props = defineProps({
     show: Boolean,

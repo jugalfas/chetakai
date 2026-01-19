@@ -8,6 +8,8 @@ import { ZiggyVue } from '../../vendor/tightenco/ziggy';
 
 import vSelect from 'vue-select';
 import 'vue-select/dist/vue-select.css';
+import { Toaster } from "vue-sonner";
+import "vue-sonner/style.css";
 
 const appName = import.meta.env.VITE_APP_NAME || "Laravel";
 
@@ -23,6 +25,7 @@ createInertiaApp({
             .use(plugin)
             .use(ZiggyVue)
             .component('v-select', vSelect)
+            .component('Toaster', Toaster)
             .mount(el);
     },
     progress: {

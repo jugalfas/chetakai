@@ -18,7 +18,9 @@ const emit = defineEmits(['toggleSidebar', 'toggleMobileMenu']);
 
 <template>
     <div
-        class="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-b-border bg-background px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
+        class="fixed top-0 right-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-b-border bg-background/80 backdrop-blur-md px-4 shadow-sm transition-[left] duration-300 left-0 sm:gap-x-6 sm:px-6 lg:px-8"
+        :class="[isSidebarCollapsed ? 'lg:left-20' : 'lg:left-64']"
+    >
         <!-- Mobile menu button -->
         <button @click="$emit('toggleMobileMenu')" class="-m-2.5 p-2.5 text-gray-400 dark:text-gray-300 lg:hidden">
             <Bars3Icon class="h-6 w-6" />

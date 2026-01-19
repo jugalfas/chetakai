@@ -1,15 +1,20 @@
 <script setup>
 import { ref, computed } from 'vue'
 import CategoryModal from '@/Components/CategoryModal.vue'
+import DeleteCategoryModal from '@/Components/DeleteCategoryModal.vue'
 import { Head, router } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import { toast } from 'vue-sonner'
 
 const { categories } = defineProps({
     categories: Array,
 })
 
 const showModal = ref(false)
+const showDeleteModal = ref(false)
 const editCategory = ref(null)
+const categoryToDelete = ref(null)
+const deleteProcessing = ref(false)
 const search = ref('')
 
 const filteredCategories = computed(() => {
@@ -31,9 +36,28 @@ const openEdit = (category) => {
     showModal.value = true
 }
 
-const deleteCategory = (id) => {
-    if (!confirm('Delete this category?')) return
-    router.delete(`/categories/${id}`)
+const openDelete = (category) => {
+    categoryToDelete.value = category
+    showDeleteModal.value = true
+}
+
+const confirmDelete = () => {
+    if (!categoryToDelete.value) return
+
+    deleteProcessing.value = true
+    router.delete(`/categories/${categoryToDelete.value.id}`, {
+        onSuccess: () => {
+            showDeleteModal.value = false
+            categoryToDelete.value = null
+            toast.success('Category deleted successfully')
+        },
+        onError: () => {
+            toast.error('Failed to delete category')
+        },
+        onFinish: () => {
+            deleteProcessing.value = false
+        }
+    })
 }
 </script>
 
@@ -91,33 +115,62 @@ const deleteCategory = (id) => {
                                         </svg>
                                     </button>
                                     <button
-                                        @click="deleteCategory(cat.id)"
+                                        @click="openDelete(cat)"
                                         class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover-elevate active-elevate-2 border border-transparent h-8 w-8 text-muted-foreground hover:text-destructive">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash2 lucide-trash-2 h-4 w-4" aria-hidden="true">
                                             <path d="M10 11v6"></path>
                                             <path d="M14 11v6"></path>
                                             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
                                             <path d="M3 6h18"></path>
-                                            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                                         </svg>
                                     </button>
                                 </div>
                             </div>
-                            <div class="space-y-1">
-                                <h3 class="text-lg font-bold text-foreground group-hover:text-accent transition-colors">{{ cat.name }}</h3>
-                                <div class="flex items-center gap-2">
-                                    <div class="whitespace-nowrap inline-flex items-center rounded-md px-2.5 py-0.5 transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 hover-elevate border-transparent bg-muted text-muted-foreground hover:bg-muted border-0 text-[10px] font-bold uppercase tracking-wider">{{ cat.quotes_count || 0 }} Quotes Assigned</div>
-                                </div>
+                            <h3 class="font-semibold text-lg tracking-tight mb-2 truncate" :title="cat.name">{{ cat.name }}</h3>
+                            <div class="flex items-center text-sm text-muted-foreground">
+                                <span class="bg-accent/50 text-accent-foreground text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">{{ cat.quotes_count || 0 }} Quotes Assigned</span>
                             </div>
                         </div>
                     </div>
-                    <div v-if="filteredCategories.length === 0" class="col-span-full text-center p-6 text-gray-400">
-                        No categories found.
+                </div>
+                
+                <!-- Empty State -->
+                <div v-if="filteredCategories.length === 0" class="text-center py-12">
+                    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder-open h-8 w-8 text-muted-foreground" aria-hidden="true">
+                            <path d="m6 14 1.45-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.55 6a2 2 0 0 1-1.94 1.5H4a2 2 0 0 1-2-2V5c0-1.1.9-2 2-2h3.93a2 2 0 0 1 1.66.9l.82 1.2a2 2 0 0 0 1.66.9H18a2 2 0 0 1 2 2v2"></path>
+                        </svg>
                     </div>
+                    <h3 class="text-lg font-semibold text-foreground">No categories found</h3>
+                    <p class="text-muted-foreground mt-1 max-w-sm mx-auto">
+                        {{ search ? 'Try adjusting your search terms.' : 'Get started by creating your first category.' }}
+                    </p>
+                    <button
+                        v-if="!search"
+                        class="mt-4 inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover-elevate active-elevate-2 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2"
+                        @click="openCreate">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus h-4 w-4 mr-2" aria-hidden="true">
+                            <path d="M5 12h14"></path>
+                            <path d="M12 5v14"></path>
+                        </svg>
+                        Add Category
+                    </button>
                 </div>
             </div>
         </div>
 
-        <CategoryModal :show="showModal" :category="editCategory" @close="showModal = false" />
+        <CategoryModal
+            :show="showModal"
+            :category="editCategory"
+            @close="showModal = false"
+        />
+
+        <DeleteCategoryModal
+            :show="showDeleteModal"
+            :category-name="categoryToDelete?.name"
+            :processing="deleteProcessing"
+            @close="showDeleteModal = false"
+            @confirm="confirmDelete"
+        />
     </AuthenticatedLayout>
 </template>

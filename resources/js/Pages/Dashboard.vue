@@ -1,4 +1,6 @@
 <script setup>
+import { toast } from 'vue-sonner'
+
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head } from '@inertiajs/vue3';
 import {
@@ -8,6 +10,7 @@ import {
     ArrowTrendingDownIcon,
     ShareIcon
 } from '@heroicons/vue/24/outline';
+toast.success('Welcome to the dashboard 🚀')
 
 const props = defineProps({
     quotes: Number,
