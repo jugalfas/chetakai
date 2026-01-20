@@ -39,20 +39,20 @@ const closeModal = () => {
 </script>
 
 <template>
-    <section class="space-y-6">
-        <header>
-            <h2 class="text-lg font-medium text-gray-900">
+    <section class="flex flex-col gap-4">
+        <div>
+            <h3 class="text-lg font-bold text-foreground mb-1">
                 Delete Account
-            </h2>
+            </h3>
 
-            <p class="mt-1 text-sm text-gray-600">
+            <p class="text-sm text-muted-foreground leading-relaxed">
                 Once your account is deleted, all of its resources and data will
                 be permanently deleted. Before deleting your account, please
                 download any data or information that you wish to retain.
             </p>
-        </header>
+        </div>
 
-        <DangerButton @click="confirmUserDeletion">Delete Account</DangerButton>
+        <button @click="confirmUserDeletion" class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover-elevate active-elevate-2 shadow-sm border-destructive-border min-h-9 py-2 w-fit bg-red-500 hover:bg-red-600 text-white font-bold uppercase tracking-widest text-xs h-10 px-6">Delete Account</button>
 
         <Modal :show="confirmingUserDeletion" @close="closeModal">
             <div class="p-6">

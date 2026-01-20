@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ChatController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\QuoteController;
 use App\Models\Post;
@@ -54,6 +55,8 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile/auto-post-schedule', [ProfileController::class, 'updateAutoPostSchedule'])->name('profile.update.auto-post-schedule');
     Route::patch('/profile/post-notifications', [ProfileController::class, 'updatePostNotifications'])->name('profile.update.post-notifications');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    Route::post('/notifications/mark-as-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-as-read');
 });
 
 

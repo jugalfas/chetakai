@@ -391,95 +391,28 @@ const togglePostNotifications = () => {
                         </div>
 
                         <!-- Security Tab -->
-                        <div v-show="activeTab === 'security'"
-                            class="rounded-xl border text-card-foreground border-border bg-card shadow-sm">
-                            <div class="flex flex-col space-y-1.5 p-6">
-                                <div class="font-semibold leading-none tracking-tight text-foreground">Security Settings
-                                </div>
-                                <div class="text-sm text-muted-foreground">Update your password to keep your account
-                                    secure.
-                                </div>
-                            </div>
-                            <form @submit.prevent="updatePassword" class="p-6 pt-0 space-y-6">
-                                <div class="space-y-4">
-                                    <div class="space-y-2 mb-6">
-                                        <InputLabel for="current_password" value="OLD PASSWORD" />
-                                        <div class="relative m-0">
-                                            <input id="current_password" ref="currentPasswordInput"
-                                                v-model="passwordForm.current_password"
-                                                :type="showCurrentPassword ? 'text' : 'password'" class="flex w-full rounded-md border px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm bg-muted/10 border-border text-foreground h-11" placeholder="••••••••••"
-                                                autocomplete="current-password" />
-                                            <button type="button" @click="toggleCurrentPasswordVisibility"
-                                                class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
-                                                <svg v-if="showCurrentPassword" xmlns="http://www.w3.org/2000/svg"
-                                                    width="20" height="20" viewBox="0 0 24 24" fill="none"
-                                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                                    stroke-linejoin="round" class="lucide lucide-eye-off">
-                                                    <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path>
-                                                    <path
-                                                        d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68">
-                                                    </path>
-                                                    <path
-                                                        d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61">
-                                                    </path>
-                                                    <line x1="2" x2="22" y1="2" y2="22"></line>
-                                                </svg>
-                                                <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20"
-                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                                    class="lucide lucide-eye">
-                                                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
-                                                    <circle cx="12" cy="12" r="3"></circle>
-                                                </svg>
-                                            </button>
-                                        </div>
-                                        <InputError :message="passwordForm.errors.current_password" />
+                        <div class="space-y-6">
+                            <div v-show="activeTab === 'security'"
+                                class="rounded-xl border text-card-foreground border-border bg-card shadow-sm">
+                                <div class="flex flex-col space-y-1.5 p-6">
+                                    <div class="font-semibold leading-none tracking-tight text-foreground">Security Settings
                                     </div>
-
-                                    <div class="grid gap-6 sm:grid-cols-2">
-                                        <div class="space-y-2">
-                                            <InputLabel for="password" value="NEW PASSWORD" />
+                                    <div class="text-sm text-muted-foreground">Update your password to keep your account
+                                        secure.
+                                    </div>
+                                </div>
+                                <form @submit.prevent="updatePassword">
+                                    <div class="p-6 pt-0 space-y-6">
+                                        <div class="space-y-2 mb-6">
+                                            <InputLabel for="current_password" value="OLD PASSWORD" />
                                             <div class="relative m-0">
-                                                <input id="password" ref="passwordInput" v-model="passwordForm.password"
-                                                    :type="showPassword ? 'text' : 'password'" class="flex w-full rounded-md border px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm bg-muted/10 border-border text-foreground h-11" placeholder="••••••••••"
-                                                    autocomplete="new-password" />
-                                                <button type="button" @click="togglePasswordVisibility"
+                                                <input id="current_password" ref="currentPasswordInput"
+                                                    v-model="passwordForm.current_password"
+                                                    :type="showCurrentPassword ? 'text' : 'password'" class="flex w-full rounded-md border px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm bg-muted/10 border-border text-foreground h-11" placeholder="••••••••••"
+                                                    autocomplete="current-password" />
+                                                <button type="button" @click="toggleCurrentPasswordVisibility"
                                                     class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
-                                                    <svg v-if="showPassword" xmlns="http://www.w3.org/2000/svg" width="20"
-                                                        height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                                        class="lucide lucide-eye-off">
-                                                        <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path>
-                                                        <path
-                                                            d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68">
-                                                        </path>
-                                                        <path
-                                                            d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61">
-                                                        </path>
-                                                        <line x1="2" x2="22" y1="2" y2="22"></line>
-                                                    </svg>
-                                                    <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20"
-                                                        viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                                        class="lucide lucide-eye">
-                                                        <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
-                                                        <circle cx="12" cy="12" r="3"></circle>
-                                                    </svg>
-                                                </button>
-                                            </div>
-                                            <InputError :message="passwordForm.errors.password" />
-                                        </div>
-
-                                        <div class="space-y-2">
-                                            <InputLabel for="password_confirmation" value="CONFIRM NEW PASSWORD" />
-                                            <div class="relative m-0">
-                                                <input id="password_confirmation" ref="passwordConfirmationInput"
-                                                    v-model="passwordForm.password_confirmation"
-                                                    :type="showPasswordConfirmation ? 'text' : 'password'" class="flex w-full rounded-md border px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm bg-muted/10 border-border text-foreground h-11" placeholder="••••••••••"
-                                                    autocomplete="new-password" />
-                                                <button type="button" @click="togglePasswordConfirmationVisibility"
-                                                    class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
-                                                    <svg v-if="showPasswordConfirmation" xmlns="http://www.w3.org/2000/svg"
+                                                    <svg v-if="showCurrentPassword" xmlns="http://www.w3.org/2000/svg"
                                                         width="20" height="20" viewBox="0 0 24 24" fill="none"
                                                         stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                                         stroke-linejoin="round" class="lucide lucide-eye-off">
@@ -501,24 +434,92 @@ const togglePostNotifications = () => {
                                                     </svg>
                                                 </button>
                                             </div>
-                                            <InputError :message="passwordForm.errors.password_confirmation" />
+                                            <InputError :message="passwordForm.errors.current_password" />
+                                        </div>
+    
+                                        <div class="grid gap-6 sm:grid-cols-2">
+                                            <div class="space-y-2">
+                                                <InputLabel for="password" value="NEW PASSWORD" />
+                                                <div class="relative m-0">
+                                                    <input id="password" ref="passwordInput" v-model="passwordForm.password"
+                                                        :type="showPassword ? 'text' : 'password'" class="flex w-full rounded-md border px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm bg-muted/10 border-border text-foreground h-11" placeholder="••••••••••"
+                                                        autocomplete="new-password" />
+                                                    <button type="button" @click="togglePasswordVisibility"
+                                                        class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+                                                        <svg v-if="showPassword" xmlns="http://www.w3.org/2000/svg" width="20"
+                                                            height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                            class="lucide lucide-eye-off">
+                                                            <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path>
+                                                            <path
+                                                                d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68">
+                                                            </path>
+                                                            <path
+                                                                d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61">
+                                                            </path>
+                                                            <line x1="2" x2="22" y1="2" y2="22"></line>
+                                                        </svg>
+                                                        <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                                            viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                            class="lucide lucide-eye">
+                                                            <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
+                                                            <circle cx="12" cy="12" r="3"></circle>
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                                <InputError :message="passwordForm.errors.password" />
+                                            </div>
+    
+                                            <div class="space-y-2">
+                                                <InputLabel for="password_confirmation" value="CONFIRM NEW PASSWORD" />
+                                                <div class="relative m-0">
+                                                    <input id="password_confirmation" ref="passwordConfirmationInput"
+                                                        v-model="passwordForm.password_confirmation"
+                                                        :type="showPasswordConfirmation ? 'text' : 'password'" class="flex w-full rounded-md border px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm bg-muted/10 border-border text-foreground h-11" placeholder="••••••••••"
+                                                        autocomplete="new-password" />
+                                                    <button type="button" @click="togglePasswordConfirmationVisibility"
+                                                        class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+                                                        <svg v-if="showPasswordConfirmation" xmlns="http://www.w3.org/2000/svg"
+                                                            width="20" height="20" viewBox="0 0 24 24" fill="none"
+                                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                            stroke-linejoin="round" class="lucide lucide-eye-off">
+                                                            <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path>
+                                                            <path
+                                                                d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68">
+                                                            </path>
+                                                            <path
+                                                                d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61">
+                                                            </path>
+                                                            <line x1="2" x2="22" y1="2" y2="22"></line>
+                                                        </svg>
+                                                        <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                                            viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                            class="lucide lucide-eye">
+                                                            <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
+                                                            <circle cx="12" cy="12" r="3"></circle>
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                                <InputError :message="passwordForm.errors.password_confirmation" />
+                                            </div>
                                         </div>
                                     </div>
+    
+                                    <div class="flex items-center justify-end border-t border-border bg-muted/5 p-4">
+                                        <button type="submit" :disabled="passwordForm.processing" class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover-elevate active-elevate-2 border border-primary-border min-h-9 py-2 bg-accent text-accent-foreground hover:bg-accent/90 px-8 font-bold uppercase tracking-widest text-xs h-10"
+                                            fullWidth>
+                                            UPDATE PASSWORD
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                            <div v-show="activeTab === 'security'"
+                                class="rounded-xl border text-card-foreground border-red-500/20 bg-card shadow-sm overflow-hidden">
+                                <div class="flex flex-col space-y-1.5 p-6">
+                                    <DeleteUserForm />
                                 </div>
-
-                                <div class="flex items-center border-t border-border bg-muted/5 p-4">
-                                    <PrimaryButton type="submit" :disabled="passwordForm.processing" class="ml-auto"
-                                        fullWidth>
-                                        UPDATE PASSWORD
-                                    </PrimaryButton>
-                                </div>
-                            </form>
-
-                            <div data-orientation="horizontal" role="none"
-                                class="shrink-0 h-[1px] w-full bg-border mx-6"></div>
-
-                            <div class="p-6">
-                                <DeleteUserForm />
                             </div>
                         </div>
                     </div>

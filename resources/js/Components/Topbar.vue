@@ -1,9 +1,22 @@
 <script setup>
 import Dropdown from '@/Components/Dropdown.vue';
 import DropdownLink from '@/Components/DropdownLink.vue';
-import { Link } from '@inertiajs/vue3';
-import { Bars3Icon, UserCircleIcon, Cog6ToothIcon } from '@heroicons/vue/24/outline';
+import { Link, usePage, router } from '@inertiajs/vue3';
+import { Bars3Icon, UserCircleIcon } from '@heroicons/vue/24/outline';
+import { 
+    Bell, 
+    CheckCircle2, 
+    AlertCircle, 
+    Quote, 
+    Clock, 
+    Settings2,
+    ChevronDown,
+    LogOut,
+    CheckCheck
+} from 'lucide-vue-next';
 import DarkModeToggle from '@/Components/DarkModeToggle.vue';
+import ScrollArea from './ScrollArea.vue';
+import { computed } from 'vue';
 
 const props = defineProps({
     userName: String,
@@ -14,13 +27,60 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['toggleSidebar', 'toggleMobileMenu']);
+
+const page = usePage();
+const notifications = computed(() => page.props.auth.notifications || []);
+const unreadCount = computed(() => page.props.auth.unreadNotificationsCount || 0);
+
+const formatTime = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now - date) / 1000);
+    
+    if (diffInSeconds < 60) return 'Just now';
+    
+    const diffInMinutes = Math.floor(diffInSeconds / 60);
+    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+    
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) return `${diffInHours}h ago`;
+    
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays < 7) return `${diffInDays}d ago`;
+    
+    return date.toLocaleDateString();
+};
+
+const getNotificationIcon = (notification) => {
+    const type = notification.type;
+    const title = notification.data.title || '';
+    
+    if (type.includes('PostPublished') || title.includes('Post Published')) {
+        return { icon: CheckCircle2, color: 'text-emerald-500', bg: 'bg-emerald-500/10' };
+    }
+    if (type.includes('SubscriptionUpdate') || title.includes('Subscription Update')) {
+        return { icon: AlertCircle, color: 'text-accent', bg: 'bg-accent/10' };
+    }
+    if (type.includes('CategorySuggestion') || title.includes('Category Suggestion')) {
+        return { icon: Quote, color: 'text-primary', bg: 'bg-primary/10' };
+    }
+    
+    return { icon: Bell, color: 'text-blue-500', bg: 'bg-blue-500/10' };
+};
+
+const markAllAsRead = () => {
+    router.post(route('notifications.mark-as-read'), {}, {
+        preserveScroll: true,
+        onSuccess: () => {
+            // Notifications will be automatically removed via the shared props
+        }
+    });
+};
 </script>
 
 <template>
-    <div
-        class="fixed top-0 right-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-b-border bg-background/80 backdrop-blur-md px-4 shadow-sm transition-[left] duration-300 left-0 sm:gap-x-6 sm:px-6 lg:px-8"
-        :class="[isSidebarCollapsed ? 'lg:left-20' : 'lg:left-64']"
-    >
+    <div class="fixed top-0 right-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-b-border bg-background/80 backdrop-blur-md px-4 shadow-sm transition-[left] duration-300 left-0 sm:gap-x-6 sm:px-6 lg:px-8"
+        :class="[isSidebarCollapsed ? 'lg:left-20' : 'lg:left-64']">
         <!-- Mobile menu button -->
         <button @click="$emit('toggleMobileMenu')" class="-m-2.5 p-2.5 text-gray-400 dark:text-gray-300 lg:hidden">
             <Bars3Icon class="h-6 w-6" />
@@ -41,21 +101,91 @@ const emit = defineEmits(['toggleSidebar', 'toggleMobileMenu']);
                 <DarkModeToggle />
 
                 <!-- Notifications -->
-                <button class="relative p-2 text-gray-400 hover:text-white">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                        stroke="currentColor" class="w-6 h-6">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.248 24.248 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
-                    </svg>
-                    <!-- Notification badge -->
-                    <span
-                        class="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 text-xs text-white flex items-center justify-center">
-                        3
-                    </span>
-                </button>
+                <Dropdown align="right" width="80"
+                    content-classes="z-50 border text-popover-foreground outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 origin-[--radix-popover-content-transform-origin] w-80 p-0 bg-sidebar border-sidebar-border shadow-2xl overflow-hidden rounded-xl">
+                    <template #trigger>
+                        <button class="relative p-2 text-gray-400 hover:text-white transition-colors group">
+                            <Bell class="w-6 h-6 group-hover:text-white transition-colors" />
+                            <!-- Notification badge -->
+                            <span v-if="unreadCount > 0"
+                                class="absolute top-1.5 right-1.5 h-4 w-4 rounded-full bg-red-500 text-[10px] font-bold text-white flex items-center justify-center animate-pulse shadow-sm">
+                                {{ unreadCount > 9 ? '9+' : unreadCount }}
+                            </span>
+                        </button>
+                    </template>
+
+                    <template #content>
+                        <div class="p-4 border-b border-sidebar-border bg-sidebar-accent/30">
+                            <div class="flex items-center justify-between">
+                                <h3 class="font-bold text-sm text-foreground">Notifications</h3>
+                                <span v-if="unreadCount > 0"
+                                    class="text-[10px] font-bold uppercase tracking-wider text-accent bg-accent/10 px-2 py-0.5 rounded-full">
+                                    {{ unreadCount }} New
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="relative h-[300px]">
+                            <ScrollArea
+                                class="h-full w-full rounded-[inherit] overflow-y-auto custom-scrollbar"
+                            >
+                                <div style="min-width: 100%; display: table;">
+                                    <div v-if="notifications.length > 0" class="flex flex-col">
+                                        <div v-for="notification in notifications" :key="notification.id" 
+                                            class="p-4 hover:bg-sidebar-accent/50 transition-colors cursor-pointer border-b border-sidebar-border/50"
+                                            :class="{ 'bg-sidebar-accent/20': !notification.read_at }">
+                                            <div class="flex gap-3">
+                                                <div :class="['h-8 w-8 rounded-full flex items-center justify-center shrink-0', getNotificationIcon(notification).bg]">
+                                                    <component :is="getNotificationIcon(notification).icon" 
+                                                        :class="['h-4 w-4', getNotificationIcon(notification).color]" />
+                                                </div>
+                                                <div class="space-y-1">
+                                                    <p class="text-sm font-medium text-foreground leading-none">
+                                                        {{ notification.data.title }}
+                                                    </p>
+                                                    <p class="text-xs text-muted-foreground line-clamp-2">
+                                                        {{ notification.data.message }}
+                                                    </p>
+                                                    <div class="flex items-center gap-1 text-[10px] text-muted-foreground pt-1">
+                                                        <Clock class="h-3 w-3" />
+                                                        <span>{{ formatTime(notification.created_at) }}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Empty State -->
+                                    <div v-else class="h-full flex flex-col items-center justify-center p-8 text-center space-y-4">
+                                        <div class="h-16 w-16 rounded-full bg-sidebar-accent/50 flex items-center justify-center">
+                                            <Bell class="h-8 w-8 text-muted-foreground/40" />
+                                        </div>
+                                        <div class="space-y-1">
+                                            <p class="text-sm font-bold text-foreground">No new notifications</p>
+                                            <p class="text-xs text-muted-foreground leading-relaxed">
+                                                When you have new activity or updates, they'll appear here.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </ScrollArea>
+                        </div>
+
+                        <div v-if="notifications.length > 0" class="p-3 border-t border-sidebar-border text-center bg-sidebar-accent/10">
+                            <button
+                                @click="markAllAsRead"
+                                class="inline-flex items-center justify-center gap-2 whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover-elevate active-elevate-2 border border-transparent min-h-8 rounded-md px-3 text-xs font-bold text-accent hover:text-accent hover:bg-accent/5 w-full uppercase tracking-widest">
+                                <CheckCheck class="h-3 w-3" />
+                                Mark as read
+                            </button>
+                        </div>
+                    </template>
+                </Dropdown>
+
 
                 <!-- Profile dropdown -->
-                <Dropdown align="right" width="48" :content-classes="'py-1 rounded-md p-1'">
+                <Dropdown align="right" width="48"
+                    :content-classes="'py-1 rounded-md p-1 bg-sidebar border border-sidebar-border'">
                     <template #trigger>
                         <button
                             class="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 hover-elevate active-elevate-2 border border-transparent min-h-9 px-4 py-2 pl-2 pr-1 gap-2 h-9 rounded-full hover:bg-sidebar-accent"
@@ -69,13 +199,7 @@ const emit = defineEmits(['toggleSidebar', 'toggleMobileMenu']);
                             <span class="text-sm font-medium text-sidebar-foreground hidden sm:inline-block">
                                 {{ userName }}
                             </span>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round"
-                                class="lucide lucide-chevron-down h-4 w-4 text-sidebar-foreground/50"
-                                aria-hidden="true">
-                                <path d="m6 9 6 6 6-6"></path>
-                            </svg>
+                            <ChevronDown class="h-4 w-4 text-sidebar-foreground/50" />
                         </button>
                     </template>
 
@@ -93,15 +217,7 @@ const emit = defineEmits(['toggleSidebar', 'toggleMobileMenu']);
                         </div>
                         <DropdownLink :href="route('logout')" method="post" as="button"
                             class="relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&>svg]:size-4 [&>svg]:shrink-0 text-destructive hover:bg-destructive/10">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="lucide lucide-log-out h-4 w-4 mr-2" aria-hidden="true"
-                                data-replit-metadata="client/src/components/layout/DashboardLayout.tsx:204:18"
-                                data-component-name="LogOut">
-                                <path d="m16 17 5-5-5-5"></path>
-                                <path d="M21 12H9"></path>
-                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                            </svg>
+                            <LogOut class="h-4 w-4 mr-2" />
                             Log out
                         </DropdownLink>
                     </template>

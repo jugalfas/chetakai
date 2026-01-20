@@ -117,18 +117,21 @@ const confirmDelete = () => {
                                     <button
                                         @click="openDelete(cat)"
                                         class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover-elevate active-elevate-2 border border-transparent h-8 w-8 text-muted-foreground hover:text-destructive">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash2 lucide-trash-2 h-4 w-4" aria-hidden="true">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash2 lucide-trash-2 h-4 w-4" aria-hidden="true" data-replit-metadata="client/src/pages/Categories.tsx:114:20" data-component-name="Trash2">
                                             <path d="M10 11v6"></path>
                                             <path d="M14 11v6"></path>
                                             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
                                             <path d="M3 6h18"></path>
+                                            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                                         </svg>
                                     </button>
                                 </div>
                             </div>
-                            <h3 class="font-semibold text-lg tracking-tight mb-2 truncate" :title="cat.name">{{ cat.name }}</h3>
-                            <div class="flex items-center text-sm text-muted-foreground">
-                                <span class="bg-accent/50 text-accent-foreground text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">{{ cat.quotes_count || 0 }} Quotes Assigned</span>
+                            <div class="space-y-1">
+                                <h3 class="text-lg font-bold text-foreground group-hover:text-accent transition-colors" :title="cat.name">{{ cat.name }}</h3>
+                                <div class="flex items-center gap-2">
+                                    <span class="whitespace-nowrap inline-flex items-center rounded-md px-2.5 py-0.5 transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 hover-elevate border-transparent bg-muted text-muted-foreground hover:bg-muted border-0 text-[10px] font-bold uppercase tracking-wider">{{ cat.quotes_count || 0 }} Quotes Assigned</span>
+                                </div>
                             </div>
                         </div>
                     </div>
