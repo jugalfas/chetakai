@@ -29,5 +29,9 @@ class DatabaseSeeder extends Seeder
             'auto_post_schedule_enabled' => true,
             'post_notifications_enabled' => true,
         ]);
+
+        $this->call([
+            AdminSeeder::class,
+        ]);
     }
 }

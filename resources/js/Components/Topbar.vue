@@ -24,6 +24,10 @@ const props = defineProps({
         type: Boolean,
         default: false,
     },
+    isAdmin: {
+        type: Boolean,
+        default: false,
+    },
 });
 
 const emit = defineEmits(['toggleSidebar', 'toggleMobileMenu']);
@@ -76,6 +80,18 @@ const markAllAsRead = () => {
         }
     });
 };
+
+const user = computed(() => {
+    return props.isAdmin ? page.props.auth.admin : page.props.auth.user;
+});
+
+const logoutRoute = computed(() => {
+    return props.isAdmin ? route('admin.logout') : route('logout');
+});
+
+const profileRoute = computed(() => {
+    return props.isAdmin ? '#' : route('profile.edit');
+});
 </script>
 
 <template>
@@ -100,8 +116,8 @@ const markAllAsRead = () => {
                 <!-- Dark mode toggle -->
                 <DarkModeToggle />
 
-                <!-- Notifications -->
-                <Dropdown align="right" width="80"
+                <!-- Notifications (only for regular users for now) -->
+                <Dropdown v-if="!isAdmin" align="right" width="80"
                     content-classes="z-50 border text-popover-foreground outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 origin-[--radix-popover-content-transform-origin] w-80 p-0 bg-sidebar border-sidebar-border shadow-2xl overflow-hidden rounded-xl">
                     <template #trigger>
                         <button class="relative p-2 text-gray-400 hover:text-white transition-colors group">
@@ -194,7 +210,7 @@ const markAllAsRead = () => {
                             <span
                                 class="relative flex shrink-0 overflow-hidden rounded-full h-7 w-7 border border-sidebar-border">
                                 <img class="aspect-square h-full w-full"
-                                    :src="$page.props.auth.user.avatar || 'https://github.com/shadcn.png'">
+                                    :src="user?.avatar || 'https://github.com/shadcn.png'">
                             </span>
                             <span class="text-sm font-medium text-sidebar-foreground hidden sm:inline-block">
                                 {{ userName }}
@@ -208,14 +224,14 @@ const markAllAsRead = () => {
                         <p class="px-2 py-1.5 text-sm font-semibold">My Account</p>
                         <div role="separator" aria-orientation="horizontal" class="-mx-1 my-1 h-px bg-sidebar-border">
                         </div>
-                        <DropdownLink :href="route('profile.edit')"
+                        <DropdownLink v-if="!isAdmin" :href="profileRoute"
                             class="relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent text-gray-700 dark:text-gray-300">
                             <UserCircleIcon class="mr-2 h-4 w-4" />
                             Profile
                         </DropdownLink>
-                        <div role="separator" aria-orientation="horizontal" class="-mx-1 my-1 h-px bg-sidebar-border">
+                        <div v-if="!isAdmin" role="separator" aria-orientation="horizontal" class="-mx-1 my-1 h-px bg-sidebar-border">
                         </div>
-                        <DropdownLink :href="route('logout')" method="post" as="button"
+                        <DropdownLink :href="logoutRoute" method="post" as="button"
                             class="relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&>svg]:size-4 [&>svg]:shrink-0 text-destructive hover:bg-destructive/10">
                             <LogOut class="h-4 w-4 mr-2" />
                             Log out

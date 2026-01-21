@@ -1,9 +1,12 @@
 <script setup>
-import { Link } from '@inertiajs/vue3';
+import { computed } from 'vue';
+import { usePage, Link } from '@inertiajs/vue3';
 import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 import {
     XMarkIcon
 } from '@heroicons/vue/24/outline';
+
+const page = usePage();
 
 const props = defineProps({
     isCollapsed: {
@@ -14,36 +17,75 @@ const props = defineProps({
         type: Boolean,
         default: false,
     },
+    isAdmin: {
+        type: Boolean,
+        default: false,
+    },
 });
 
 const emit = defineEmits(['close-mobile']);
 
-const navigation = [
-    {
-        name: 'Dashboard',
-        href: route('dashboard'),
-        icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="h-4 w-4"><rect width="7" height="9" x="3" y="3" rx="1"></rect><rect width="7" height="5" x="14" y="3" rx="1"></rect><rect width="7" height="9" x="14" y="12" rx="1"></rect><rect width="7" height="5" x="3" y="16" rx="1"></rect></svg>',
-        current: route().current('dashboard'),
-    },
-    {
-        name: 'Chat',
-        href: route('chat.index'),
-        icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="h-4 w-4"><path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"></path></svg>',
-        current: route().current('chat.index'),
-    },
-    {
-        name: 'Quotes',
-        href: route('quotes.index'),
-        icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="h-4 w-4"><path d="M16 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z"></path><path d="M5 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z"></path></svg>',
-        current: route().current('quotes.index'),
-    },
-    {
-        name: 'Categories',
-        href: route('categories.index'),
-        icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="h-4 w-4"><rect width="18" height="18" x="3" y="3" rx="2"></rect><path d="M3 9h18"></path><path d="M3 15h18"></path><path d="M9 3v18"></path><path d="M15 3v18"></path></svg>',
-        current: route().current('categories.index'),
-    },
-];
+const logoutRoute = computed(() => {
+    return props.isAdmin ? route('admin.logout') : route('logout');
+});
+
+const navigation = computed(() => {
+    if (props.isAdmin) {
+        return [
+            {   
+                name: 'Dashboard',
+                href: route('admin.dashboard'),
+                icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="h-4 w-4"><rect width="7" height="9" x="3" y="3" rx="1"></rect><rect width="7" height="5" x="14" y="3" rx="1"></rect><rect width="7" height="9" x="14" y="12" rx="1"></rect><rect width="7" height="5" x="3" y="16" rx="1"></rect></svg>',
+                current: route().current('admin.dashboard'),
+            },
+            {
+                name: 'Users',
+                href: route('admin.users.index'),
+                icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="h-4 w-4"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>',
+                current: route().current('admin.users.*'),
+            },
+            {
+                name: 'Quotes',
+                href: route('admin.quotes.index'),
+                icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="h-4 w-4"><path d="M16 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z"></path><path d="M5 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z"></path></svg>',
+                current: route().current('admin.quotes.*'),
+            },
+            {
+                name: 'Categories',
+                href: route('admin.categories.index'),
+                icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="h-4 w-4"><rect width="18" height="18" x="3" y="3" rx="2"></rect><path d="M3 9h18"></path><path d="M3 15h18"></path><path d="M9 3v18"></path><path d="M15 3v18"></path></svg>',
+                current: route().current('admin.categories.*'),
+            },
+        ];
+    }
+
+    return [
+        {
+            name: 'Dashboard',
+            href: route('dashboard'),
+            icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="h-4 w-4"><rect width="7" height="9" x="3" y="3" rx="1"></rect><rect width="7" height="5" x="14" y="3" rx="1"></rect><rect width="7" height="9" x="14" y="12" rx="1"></rect><rect width="7" height="5" x="3" y="16" rx="1"></rect></svg>',
+            current: route().current('dashboard'),
+        },
+        {
+            name: 'Chat',
+            href: route('chat.index'),
+            icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="h-4 w-4"><path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"></path></svg>',
+            current: route().current('chat.index'),
+        },
+        {
+            name: 'Quotes',
+            href: route('quotes.index'),
+            icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="h-4 w-4"><path d="M16 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z"></path><path d="M5 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z"></path></svg>',
+            current: route().current('quotes.index'),
+        },
+        {
+            name: 'Categories',
+            href: route('categories.index'),
+            icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="h-4 w-4"><rect width="18" height="18" x="3" y="3" rx="2"></rect><path d="M3 9h18"></path><path d="M3 15h18"></path><path d="M9 3v18"></path><path d="M15 3v18"></path></svg>',
+            current: route().current('categories.index'),
+        },
+    ];
+});
 </script>
 
 <template>
@@ -54,8 +96,8 @@ const navigation = [
             isCollapsed ? 'w-20' : 'w-64'
         ]">
             <!-- Logo -->
-            <div class="flex h-16 shrink-0 items-center px-6 border-b border-b-border">
-                <Link :href="route('dashboard')" class="flex items-center">
+            <div class="h-16 flex shrink-0 items-center px-6 border-b border-b-border">
+                <Link :href="isAdmin ? route('admin.dashboard') : route('dashboard')" class="flex items-center">
                     <ApplicationLogo :class="[
                         'h-8 w-auto text-white transition-all duration-300',
                         isCollapsed ? 'mx-auto' : ''
@@ -83,7 +125,7 @@ const navigation = [
                         </Link>
                     </a>
                 </div>
-                <div role="list" class="space-y-1">
+                <div v-if="!isAdmin" role="list" class="space-y-1">
                     <div class="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest text-sidebar-foreground/40">Account</div>
                     <a>
                         <Link :href="route('profile.edit')" :class="[
@@ -97,12 +139,11 @@ const navigation = [
                             <span v-if="!isCollapsed">Profile</span>
                         </Link>
                     </a>
-
                 </div>
             </nav>
             <div class="p-4 border-t border-sidebar-border mt-auto">
                 <a>
-                    <Link :href="route('logout')" method="post" as="button" :class="[
+                    <Link :href="logoutRoute" method="post" as="button" :class="[
                         'inline-flex items-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover-elevate active-elevate-2 border border-transparent min-h-9 py-2 w-full justify-start text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent gap-3 px-3',
                         isCollapsed ? 'justify-center px-2' : ''
                     ]">
@@ -126,7 +167,7 @@ const navigation = [
         <div class="flex grow flex-col gap-y-5 overflow-y-auto px-6 pb-4">
             <!-- Mobile header -->
             <div class="flex h-16 shrink-0 items-center justify-between">
-                <Link :href="route('dashboard')" class="flex items-center" @click="emit('close-mobile')">
+                <Link :href="isAdmin ? route('admin.dashboard') : route('dashboard')" class="flex items-center" @click="emit('close-mobile')">
                     <ApplicationLogo class="h-8 w-auto text-white" />
                     <span class="ml-3 text-lg font-semibold text-white">
                         {{ $page.props.app?.name || 'ChetakAI' }}
@@ -177,7 +218,7 @@ const navigation = [
                         </Link>
                     </li>
                     <li>
-                        <Link :href="route('logout')" method="post" as="button" @click="emit('close-mobile')" :class="[
+                        <Link :href="logoutRoute" method="post" as="button" @click="emit('close-mobile')" :class="[
                             'group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold transition-colors duration-200',
                             'text-gray-400 hover:text-white hover:bg-[#2D3A4F]'
                         ]">

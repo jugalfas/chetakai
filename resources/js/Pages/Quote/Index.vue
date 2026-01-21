@@ -138,6 +138,7 @@ const showScheduleModal = ref(false);
 const selectedQuote = ref(null);
 const quoteToDelete = ref(null);
 const scheduleData = ref({});
+const processing = ref(false);
 
 // Initialize schedule data
 watch(
@@ -172,6 +173,8 @@ const deleteQuote = () => {
 
     router.delete(route("quotes.destroy", quoteToDelete.value.id), {
         preserveScroll: true,
+        onBefore: () => processing.value = true,
+        onFinish: () => processing.value = false,
         onSuccess: () => {
             showDeleteConfirmModal.value = false;
             quoteToDelete.value = null;
@@ -403,8 +406,13 @@ const scheduleQuote = (quote) => {
         <EditQuoteModal :show="showEditModal" :quote="selectedQuote" :categories="categories"
             @close="showEditModal = false" />
         <SchedulePostModal :show="showScheduleModal" :quote="selectedQuote" @close="showScheduleModal = false" />
-        <DeleteConfirmationModal :show="showDeleteConfirmModal" title="Delete Quote"
+        <DeleteConfirmationModal
+            :show="showDeleteConfirmModal"
+            :processing="processing"
+            title="Delete Quote"
             message="Are you sure you want to delete this quote? This action cannot be undone."
-            @close="showDeleteConfirmModal = false" @confirm="deleteQuote" />
+            @close="showDeleteConfirmModal = false"
+            @confirm="deleteQuote"
+        />
     </AuthenticatedLayout>
 </template>
