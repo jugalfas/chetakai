@@ -42,6 +42,16 @@ Route::get('/contact', function () {
 
 Route::post('/contact', [ContactController::class, 'submit'])->name('contact.submit');
 
+Route::get('/mail-preview', function () {
+    $data = [
+        'name' => 'Jugal Faswala',
+        'email' => 'jugalfaswala@gmail.com',
+        'message' => "Hello!\n\nThis is a preview of the new contact form email template. It supports multiple lines and uses the custom layout we just created.\n\nBest regards,\nChetak Team"
+    ];
+
+    return new App\Mail\ContactFormSubmitted($data);
+});
+
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/chat', [ChatController::class, 'index'])->name('chat.index');
     Route::post('/chat', [ChatController::class, 'store'])->name('chat.store');
