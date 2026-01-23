@@ -36,5 +36,5 @@ return Application::configure(basePath: dirname(__DIR__))
     })->withSchedule(function (Schedule $schedule) {
         $schedule->command('quotes:generate')->dailyAt('04:00');
         $schedule->command('reminder:check')->everyThirtyMinutes();
-        $schedule->command('instagram:scheduled-posts')->everyMinute();
+        // $schedule->command('instagram:scheduled-posts')->everyMinute();
     })->create();
