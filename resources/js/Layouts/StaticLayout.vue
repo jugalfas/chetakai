@@ -2,6 +2,7 @@
 import { Link } from '@inertiajs/vue3';
 import { ref, onMounted, onUnmounted } from 'vue';
 import { Toaster } from 'vue-sonner';
+import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 
 const scrolled = ref(false);
 
@@ -44,9 +45,9 @@ const applyTheme = () => {
         ]">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                    <img src="/logo/Chetak-white.png" alt="Logo" class="w-10 h-10 dark:block hidden">
-                    <img src="/logo/Chetak.png" alt="Logo" class="w-10 h-10 dark:hidden block"><span
-                        class="text-xl sm:text-2xl font-bold tracking-tight josefin-sans">Chetak</span>
+                    <ApplicationLogo class="w-10 h-10 dark:block hidden" :size="10" />
+                    <ApplicationLogo class="w-10 h-10 dark:hidden block" :size="10" />
+                    <span class="text-xl sm:text-2xl font-bold tracking-tight josefin-sans">Chetak</span>
                 </div>
                 <div class="hidden lg:flex items-center gap-8 text-sm font-medium text-muted-foreground"><a
                         href="#features" class="hover:text-foreground transition-colors">Features</a><a
@@ -102,8 +103,8 @@ const applyTheme = () => {
         <footer class="py-12 sm:py-20 border-t border-border">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                 <div class="flex items-center justify-center gap-2 mb-6 sm:mb-8">
-                    <img src="/logo/Chetak-white.png" alt="Logo" class="w-10 h-10 dark:block hidden">
-                    <img src="/logo/Chetak.png" alt="Logo" class="w-10 h-10 dark:hidden block">
+                    <ApplicationLogo class="w-10 h-10 dark:block hidden" :size="10" />
+                    <ApplicationLogo class="w-10 h-10 dark:hidden block" :size="10" />
                     <span class="text-lg sm:text-xl font-bold tracking-tight josefin-sans">Chetak</span>
                 </div>
                 <p class="text-muted-foreground text-[10px] sm:text-sm mb-6 sm:mb-8 px-4">© 2026 Chetak Automation Inc.
