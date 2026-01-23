@@ -35,24 +35,18 @@ const applyTheme = () => {
 
 <template>
     <div class="min-h-screen bg-background text-foreground transition-colors duration-500 overflow-x-hidden">
-        <Toaster
-            position="top-right"
-            rich-colors
-            close-button
-        />
-        <nav
-            :class="[
-                'fixed top-0 w-full z-50 transition-all duration-300 border-b',
-                scrolled 
-                    ? 'h-16 bg-background/80 backdrop-blur-md border-border' 
-                    : 'h-20 bg-transparent border-transparent'
-            ]">
+        <Toaster position="top-right" rich-colors close-button />
+        <nav :class="[
+            'fixed top-0 w-full z-50 transition-all duration-300 border-b',
+            scrolled
+                ? 'h-16 bg-background/80 backdrop-blur-md border-border'
+                : 'h-20 bg-transparent border-transparent'
+        ]">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                    <div
-                        class="h-8 w-8 sm:h-10 sm:w-10 rounded-lg sm:rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
-                        <span class="text-primary-foreground font-bold text-lg sm:text-xl">C</span>
-                    </div><span class="text-xl sm:text-2xl font-bold tracking-tight josefin-sans">Chetak</span>
+                    <img src="/logo/Chetak-white.png" alt="Logo" class="w-10 h-10 dark:block hidden">
+                    <img src="/logo/Chetak.png" alt="Logo" class="w-10 h-10 dark:hidden block"><span
+                        class="text-xl sm:text-2xl font-bold tracking-tight josefin-sans">Chetak</span>
                 </div>
                 <div class="hidden lg:flex items-center gap-8 text-sm font-medium text-muted-foreground"><a
                         href="#features" class="hover:text-foreground transition-colors">Features</a><a
@@ -108,16 +102,17 @@ const applyTheme = () => {
         <footer class="py-12 sm:py-20 border-t border-border">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                 <div class="flex items-center justify-center gap-2 mb-6 sm:mb-8">
-                    <div class="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-primary flex items-center justify-center"><span
-                            class="text-primary-foreground font-bold text-sm sm:text-base">C</span></div><span
-                        class="text-lg sm:text-xl font-bold tracking-tight josefin-sans">Chetak</span>
+                    <img src="/logo/Chetak-white.png" alt="Logo" class="w-10 h-10 dark:block hidden">
+                    <img src="/logo/Chetak.png" alt="Logo" class="w-10 h-10 dark:hidden block">
+                    <span class="text-lg sm:text-xl font-bold tracking-tight josefin-sans">Chetak</span>
                 </div>
                 <p class="text-muted-foreground text-[10px] sm:text-sm mb-6 sm:mb-8 px-4">© 2026 Chetak Automation Inc.
                     All rights reserved.</p>
                 <div
                     class="flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-4">
                     <Link :href="route('privacy')" class="hover:text-foreground transition-colors">Privacy Policy</Link>
-                    <Link :href="route('terms-of-service')" class="hover:text-foreground transition-colors">Terms of Service</Link>
+                    <Link :href="route('terms-of-service')" class="hover:text-foreground transition-colors">Terms of
+                        Service</Link>
                     <Link :href="route('contact')" class="hover:text-foreground transition-colors">Contact</Link>
                 </div>
             </div>

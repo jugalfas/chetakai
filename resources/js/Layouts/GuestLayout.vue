@@ -25,7 +25,7 @@ const applyTheme = () => {
         class="min-h-screen bg-background flex flex-col items-center justify-center p-4 transition-colors duration-300">
         <div class="mb-8 text-foreground text-center">
             <Link href="/">
-                <ApplicationLogo class="h-20 w-20 fill-current text-gray-500" />
+                <ApplicationLogo class="fill-current text-gray-500" :size="20" />
             </Link>
         </div>
 

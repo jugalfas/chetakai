@@ -96,12 +96,12 @@ const navigation = computed(() => {
             isCollapsed ? 'w-20' : 'w-64'
         ]">
             <!-- Logo -->
-            <div class="h-16 flex shrink-0 items-center px-6 border-b border-b-border">
+            <div class="h-16 flex shrink-0 items-center px-4 border-b border-b-border">
                 <Link :href="isAdmin ? route('admin.dashboard') : route('dashboard')" class="flex items-center">
                     <ApplicationLogo :class="[
                         'h-8 w-auto text-white transition-all duration-300',
                         isCollapsed ? 'mx-auto' : ''
-                    ]" />
+                    ]"  :size="8" />
                     <span v-if="!isCollapsed" class="ml-3 text-lg font-semibold text-black dark:text-white">
                         {{ $page.props.app?.name || 'ChetakAI' }}
                     </span>
@@ -168,7 +168,7 @@ const navigation = computed(() => {
             <!-- Mobile header -->
             <div class="flex h-16 shrink-0 items-center justify-between">
                 <Link :href="isAdmin ? route('admin.dashboard') : route('dashboard')" class="flex items-center" @click="emit('close-mobile')">
-                    <ApplicationLogo class="h-8 w-auto text-white" />
+                    <ApplicationLogo class="h-8 w-auto text-white" :size="8" />
                     <span class="ml-3 text-lg font-semibold text-white">
                         {{ $page.props.app?.name || 'ChetakAI' }}
                     </span>
