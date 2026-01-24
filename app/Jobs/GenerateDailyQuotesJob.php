@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\Category;
 use App\Models\Post;
 use App\Models\Quote;
 use Illuminate\Bus\Queueable;
@@ -20,10 +21,9 @@ class GenerateDailyQuotesJob implements ShouldQueue
     public function handle()
     {
         Log::info('Starting quote generation');
-
+/** @var \Illuminate\Http\Client\Response $response */
         $response = Http::post(env('N8N_GENERATE_QUOTE_URL'), [
-            'number_of_quotes' => 5,
-            'categories' => ['discipline', 'money', 'mindset'],
+            'number_of_quotes' => 5
         ]);
 
         if ($response->successful()) {
@@ -31,12 +31,17 @@ class GenerateDailyQuotesJob implements ShouldQueue
             $savedCount = 0;
 
             foreach ($quotes as $quote) {
-                if (!empty($quote['text']) && in_array($quote['category'], ['discipline', 'money', 'mindset'])) {
+                if (!empty($quote['text'])) {
                     // Store the quote
                     $savedCount++;
+
+                    $category = Category::firstOrCreate([
+                        'name' => $quote['category'],
+                    ], ['slug' => strtolower($quote['category'])]);
+
                     $quote_db = Quote::create([
                         'quote' => $quote['text'],
-                        'category' => $quote['category'],
+                        'category' => $category->id,
                         'status' => 'unused',
                         'generated_at' => now(),
                     ]);

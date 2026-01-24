@@ -15,8 +15,23 @@ class Quote extends Model
         'status',
     ];
 
+    protected $appends = ['image_url'];
+
+    public function getImageUrlAttribute()
+    {
+        if ($this->post && $this->post->image_path) {
+            return asset('storage/' . $this->post->image_path);
+        }
+        return null;
+    }
+
     public function post()
     {
         return $this->hasOne(Post::class);
+    }
+
+    public function categoryRelation()
+    {
+        return $this->belongsTo(Category::class, 'category');
     }
 }

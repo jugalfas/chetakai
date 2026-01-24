@@ -6,6 +6,10 @@ const props = defineProps({
         type: String,
         default: 'right',
     },
+    verticalAlign: {
+        type: String,
+        default: 'bottom',
+    },
     width: {
         type: String,
         default: '48',
@@ -35,13 +39,23 @@ const widthClass = computed(() => {
 });
 
 const alignmentClasses = computed(() => {
+    let classes = '';
+    
     if (props.align === 'left') {
-        return 'ltr:origin-top-left rtl:origin-top-right start-0';
+        classes += 'ltr:origin-top-left rtl:origin-top-right start-0';
     } else if (props.align === 'right') {
-        return 'ltr:origin-top-right rtl:origin-top-left end-0';
+        classes += 'ltr:origin-top-right rtl:origin-top-left end-0';
     } else {
-        return 'origin-top';
+        classes += 'origin-top';
     }
+
+    if (props.verticalAlign === 'top') {
+        classes += ' bottom-full mb-2 origin-bottom';
+    } else {
+        classes += ' mt-2';
+    }
+
+    return classes;
 });
 
 const open = ref(false);
@@ -70,7 +84,7 @@ const open = ref(false);
         >
             <div
                 v-show="open"
-                class="absolute z-50 mt-2 rounded-md shadow-lg"
+                class="absolute z-50 rounded-md shadow-lg"
                 :class="[widthClass, alignmentClasses]"
                 @click="open = false"
             >

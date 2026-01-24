@@ -1,12 +1,14 @@
 <script setup>
 import AdminLayout from "@/Layouts/AdminLayout.vue";
 import DeleteConfirmationModal from "@/Components/DeleteConfirmationModal.vue";
+import EditQuoteModal from "@/Components/EditQuoteModal.vue";
 import { Head, router, Link } from "@inertiajs/vue3";
 import { ref, watch, computed } from "vue";
 import {
     TrashIcon,
     MagnifyingGlassIcon,
     FunnelIcon,
+    PencilIcon,
 } from "@heroicons/vue/24/outline";
 import { toast } from 'vue-sonner';
 
@@ -15,6 +17,7 @@ const props = defineProps({
     filters: Object,
     categories: Array,
     statusCounts: Object,
+    allCategoriesCount: Number,
 });
 
 const search = ref(props.filters?.search || "");
@@ -24,7 +27,9 @@ const currentSort = ref(props.filters?.sort || "created_at");
 const showFiltersDropdown = ref(false);
 
 const showDeleteModal = ref(false);
+const showEditModal = ref(false);
 const quoteToDelete = ref(null);
+const quoteToEdit = ref(null);
 const processing = ref(false);
 
 // Server-side filtering
@@ -47,6 +52,11 @@ const updateFilters = () => {
 watch([search, currentStatus, currentCategory, currentSort], () => {
     updateFilters();
 });
+
+const openEdit = (quote) => {
+    quoteToEdit.value = quote;
+    showEditModal.value = true;
+};
 
 const openDelete = (quote) => {
     quoteToDelete.value = quote;
@@ -107,7 +117,7 @@ const clearFilters = () => {
             <!-- Filters Section -->
             <div class="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
                 <div class="flex bg-muted p-1 rounded-lg border border-border overflow-x-auto max-w-full">
-                    <button v-for="(label, status) in { all: 'All', published: 'Published', scheduled: 'Scheduled', pending: 'Pending', unused: 'Unused' }" 
+                    <button v-for="(label, status) in { all: 'All', posted: 'Published', scheduled: 'Scheduled', draft: 'Draft' }" 
                         :key="status"
                         @click="currentStatus = status" 
                         :class="[
@@ -117,7 +127,7 @@ const clearFilters = () => {
                                 : 'text-muted-foreground hover:text-foreground'
                         ]">
                         {{ label }}
-                        <span class="opacity-50 ml-1">({{ statusCounts[status] }})</span>
+                        <span class="opacity-50 ml-1">({{ status === 'posted' ? statusCounts.published : (status === 'draft' ? statusCounts.draft : statusCounts[status]) }})</span>
                     </button>
                 </div>
 
@@ -142,13 +152,15 @@ const clearFilters = () => {
                             <div class="px-2 py-1.5 text-sm font-semibold">Filter by Category</div>
                             <div class="h-px bg-border my-1"></div>
                             <div @click="currentCategory = ''; showFiltersDropdown = false"
-                                class="relative flex select-none items-center justify-between rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer">
+                                class="relative flex select-none items-center justify-between rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
+                                :class="{ 'bg-accent/50 text-accent-foreground': currentCategory === '' }">
                                 All Categories
-                                <span class="text-xs font-semibold bg-muted px-2 py-0.5 rounded border border-border">{{ statusCounts.all }}</span>
+                                <span class="text-xs font-semibold bg-muted px-2 py-0.5 rounded border border-border">{{ props.allCategoriesCount }}</span>
                             </div>
                             <div v-for="category in categories" :key="category.id" 
-                                @click="currentCategory = category.name; showFiltersDropdown = false"
-                                class="relative flex select-none items-center justify-between rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer">
+                                @click="currentCategory = category.id; showFiltersDropdown = false"
+                                class="relative flex select-none items-center justify-between rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
+                                :class="{ 'bg-accent/50 text-accent-foreground': currentCategory == category.id }">
                                 {{ category.name }}
                                 <span class="text-xs font-semibold bg-muted px-2 py-0.5 rounded border border-border">{{ category.quotes_count }}</span>
                             </div>
@@ -205,19 +217,22 @@ const clearFilters = () => {
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-2">
                                 <span class="inline-flex items-center rounded-md border border-border bg-muted px-2 py-0.5 text-[10px] font-bold text-accent uppercase">
-                                    {{ quote.category || 'Uncategorized' }}
+                                    {{ quote.category_relation?.name || 'Uncategorized' }}
                                 </span>
                                 <span :class="[
                                     'inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium',
-                                    quote.status === 'published' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
-                                    quote.status === 'scheduled' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' :
-                                    quote.status === 'pending' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' :
+                                    quote.post?.status === 'posted' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
+                                    quote.post?.status === 'scheduled' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' :
+                                    (quote.post?.status === 'draft' || !quote.post) ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' :
                                     'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
                                 ]">
-                                    {{ quote.status }}
+                                    {{ quote.post?.status === 'posted' ? 'Published' : (quote.post?.status || 'Draft') }}
                                 </span>
                             </div>
                             <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button @click="openEdit(quote)" class="p-1 text-muted-foreground hover:text-accent transition-colors">
+                                        <PencilIcon class="h-4 w-4" />
+                                    </button>
                                     <button @click="openDelete(quote)" class="p-1 text-muted-foreground hover:text-destructive transition-colors">
                                         <TrashIcon class="h-4 w-4" />
                                     </button>
@@ -248,6 +263,13 @@ const clearFilters = () => {
         </div>
 
         <!-- Modals -->
+        <EditQuoteModal
+            :show="showEditModal"
+            :quote="quoteToEdit"
+            :categories="categories"
+            @close="showEditModal = false"
+        />
+
         <DeleteConfirmationModal
             :show="showDeleteModal"
             :processing="processing"

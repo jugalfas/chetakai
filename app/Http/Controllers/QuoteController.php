@@ -16,28 +16,117 @@ class QuoteController extends Controller
 {
     public function index(Request $request)
     {
-        $quotes = Quote::with('post')
+        $quotes = Quote::with('post', 'categoryRelation')
             ->when($request->search, function ($q, $search) {
                 $q->where('quote', 'like', "%{$search}%");
+            })
+            ->when($request->category, function ($q, $categoryId) {
+                $q->where('category', $categoryId);
+            })
+            ->when($request->status && $request->status !== 'all', function ($q) use ($request) {
+                $status = $request->status;
+                if ($status === 'draft') {
+                    $q->where(function ($query) {
+                        $query->whereDoesntHave('post')
+                            ->orWhereHas('post', function ($subQuery) {
+                                $subQuery->where('status', 'draft');
+                            });
+                    });
+                } else {
+                    $q->whereHas('post', function ($query) use ($status) {
+                        $query->where('status', $status);
+                    });
+                }
             })
             ->when($request->sort, function ($q, $sort) use ($request) {
                 $q->orderBy($sort, $request->direction ?? 'asc');
             }, function ($q) {
                 $q->latest();
             })
-            ->paginate(10)
+            ->paginate($request->per_page ?? 10)
             ->withQueryString();
+
+        // Base query for counts, filtered by search
+        $baseCountQuery = Quote::query()
+            ->when($request->search, function ($q, $search) {
+                $q->where('quote', 'like', "%{$search}%");
+            });
+
+        // Status counts for the tabs (filtered by search AND category)
+        $statusCountsQuery = (clone $baseCountQuery)
+            ->when($request->category, function ($q, $categoryId) {
+                $q->where('category', $categoryId);
+            });
+
+        $statusCounts = [
+            'all' => (clone $statusCountsQuery)->count(),
+            'published' => (clone $statusCountsQuery)->whereHas('post', function ($q) {
+                $q->where('status', 'posted');
+            })->count(),
+            'scheduled' => (clone $statusCountsQuery)->whereHas('post', function ($q) {
+                $q->where('status', 'scheduled');
+            })->count(),
+            'draft' => (clone $statusCountsQuery)->where(function ($q) {
+                $q->whereDoesntHave('post')
+                    ->orWhereHas('post', function ($subQuery) {
+                        $subQuery->where('status', 'draft');
+                    });
+            })->count(),
+        ];
+
+        // Total count for "All Categories" dropdown (filtered by search AND status, but NOT category)
+        $allCategoriesCount = (clone $baseCountQuery)
+            ->when($request->status && $request->status !== 'all', function ($q) use ($request) {
+                $status = $request->status;
+                if ($status === 'draft') {
+                    $q->where(function ($query) {
+                        $query->whereDoesntHave('post')
+                            ->orWhereHas('post', function ($subQuery) {
+                                $subQuery->where('status', 'draft');
+                            });
+                    });
+                } else {
+                    $q->whereHas('post', function ($query) use ($status) {
+                        $query->where('status', $status);
+                    });
+                }
+            })->count();
+
+        // Categories with counts (filtered by search AND status)
+        $categories = Category::withCount(['quotes' => function ($query) use ($request) {
+            $query->when($request->search, function ($q, $search) {
+                $q->where('quote', 'like', "%{$search}%");
+            })
+                ->when($request->status && $request->status !== 'all', function ($q) use ($request) {
+                    $status = $request->status;
+                    if ($status === 'draft') {
+                        $q->where(function ($query) {
+                            $query->whereDoesntHave('post')
+                                ->orWhereHas('post', function ($subQuery) {
+                                    $subQuery->where('status', 'draft');
+                                });
+                        });
+                    } else {
+                        $q->whereHas('post', function ($query) use ($status) {
+                            $query->where('status', $status);
+                        });
+                    }
+                });
+        }])->where('is_active', true)->get();
 
         return Inertia::render('Quote/Index', [
             'quotes' => $quotes,
-            'filters' => $request->only(['search']),
-            'categories' => Category::where('is_active', true)->get(),
+            'filters' => $request->only(['search', 'status', 'category', 'sort', 'direction']),
+            'categories' => $categories,
+            'statusCounts' => $statusCounts,
+            'allCategoriesCount' => $allCategoriesCount,
             'canvaClientId' => config('services.canva.client_id'),
         ]);
     }
 
     public function generate(Request $request)
     {
+        /** @var \Illuminate\Http\Client\Response $response */
         $response = Http::timeout(60)->post(env('N8N_GENERATE_QUOTE_URL'), $request->all());
 
         if (!$response->successful()) {
@@ -59,9 +148,13 @@ class QuoteController extends Controller
             ], 500);
         }
 
+        $category = Category::firstOrCreate([
+            'name' => $data['category'],
+        ]);
+
         Quote::create([
             'quote' => $data['quote'],
-            'category' => $data['category'],
+            'category' => $category->id,
             'mood' => $data['mood'],
             'status' => 'unused',
         ]);
@@ -107,18 +200,20 @@ class QuoteController extends Controller
                 'category' => $validated['category'],
             ]);
 
-            if ($quote->post) {
-                $updateData = [];
-                if (isset($validated['caption'])) {
-                    $updateData['caption'] = $validated['caption'];
-                }
-                if ($request->hasFile('image')) {
-                    $path = $request->file('image')->store('posts', 'public');
-                    $updateData['image_path'] = $path;
-                }
-                if (!empty($updateData)) {
-                    $quote->post->update($updateData);
-                }
+            $postData = [];
+            if (isset($validated['caption'])) {
+                $postData['caption'] = $validated['caption'];
+            }
+            if ($request->hasFile('image')) {
+                $path = $request->file('image')->store('posts', 'public');
+                $postData['image_path'] = $path;
+            }
+
+            if (!empty($postData)) {
+                $quote->post()->updateOrCreate(
+                    ['quote_id' => $quote->id],
+                    $postData
+                );
             }
         });
 

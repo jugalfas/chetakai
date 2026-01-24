@@ -24,7 +24,6 @@ Route::middleware('auth:admin')->group(function () {
 
     Route::prefix('quotes')->name('quotes.')->group(function () {
         Route::get('/', [QuoteController::class, 'index'])->name('index');
-        Route::post('/', [QuoteController::class, 'store'])->name('store');
         Route::put('/{quote}', [QuoteController::class, 'update'])->name('update');
         Route::delete('/{quote}', [QuoteController::class, 'destroy'])->name('destroy');
     });
