@@ -16,16 +16,15 @@ class InstagramScheduledPostsCommand extends Command
     public function handle()
     {
         try {
-            Log::error(Carbon::now());
-            $posts = Post::where('status', 'scheduled')
-                ->where('scheduled_at', '<=', Carbon::now())
-                ->get();
+            // $posts = Post::where('status', 'scheduled')
+            //    ->where('scheduled_at', '<=', Carbon::now())
+            //    ->get();
 
-            foreach ($posts as $post) {
-                PublishInstagramPostJob::dispatch($post);
-            }
+            // foreach ($posts as $post) {
+            //    PublishInstagramPostJob::dispatch($post);
+            // }
 
-            $this->info('Dispatched ' . $posts->count() . ' jobs.');
+            Log::info('Dispatched 0 jobs.');
         } catch (\Exception $e) {
             $this->error('Error: ' . $e->getMessage());
             Log::error('Command error: ' . $e->getMessage());
