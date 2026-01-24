@@ -56,6 +56,13 @@ const navigation = computed(() => {
                 icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="h-4 w-4"><rect width="18" height="18" x="3" y="3" rx="2"></rect><path d="M3 9h18"></path><path d="M3 15h18"></path><path d="M9 3v18"></path><path d="M15 3v18"></path></svg>',
                 current: route().current('admin.categories.*'),
             },
+            {
+                name: 'Messages',
+                href: route('admin.contacts.index'),
+                icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="h-4 w-4"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>',
+                current: route().current('admin.contacts.*'),
+                count: page.props.auth.unreadMessagesCount,
+            },
         ];
     }
 
@@ -114,14 +121,23 @@ const navigation = computed(() => {
                     <div class="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest text-sidebar-foreground/40">Main</div>
                     <a v-for="item in navigation" :key="item.name">
                         <Link :href="item.href" :class="[
-                            'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer',
+                            'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer relative',
                             item.current
                                 ? 'bg-sidebar-accent text-sidebar-accent-foreground'
                                 : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground',
                             isCollapsed ? 'justify-center px-2' : ''
                         ]">
-                            <span v-html="item.icon"></span>
+                            <div class="relative">
+                                <span v-html="item.icon"></span>
+                                <span v-if="isCollapsed && item.count > 0" class="absolute -top-1 -right-1 flex h-2 w-2">
+                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                                    <span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                                </span>
+                            </div>
                             <span v-if="!isCollapsed">{{ item.name }}</span>
+                            <span v-if="!isCollapsed && item.count > 0" class="ml-auto inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                                {{ item.count }}
+                            </span>
                         </Link>
                     </a>
                 </div>
@@ -199,6 +215,9 @@ const navigation = computed(() => {
                                             : 'text-gray-400 group-hover:text-white'
                                     ]" v-html="item.icon"></span>
                                     <span>{{ item.name }}</span>
+                                    <span v-if="item.count > 0" class="ml-auto inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                                        {{ item.count }}
+                                    </span>
                                 </Link>
                             </li>
                         </ul>

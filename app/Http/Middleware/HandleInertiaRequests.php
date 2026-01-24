@@ -36,6 +36,7 @@ class HandleInertiaRequests extends Middleware
                 'admin' => $request->user('admin'),
                 'notifications' => $request->user() ? $request->user()->unreadNotifications()->latest()->limit(10)->get() : [],
                 'unreadNotificationsCount' => $request->user() ? $request->user()->unreadNotifications()->count() : 0,
+                'unreadMessagesCount' => $request->user('admin') ? \App\Models\Contact::where('is_read', false)->count() : 0,
             ],
             'app' => [
                 'name' => config('app.name'),

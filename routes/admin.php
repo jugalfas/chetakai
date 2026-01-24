@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\QuoteController;
 use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\ContactController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest:admin')->group(function () {
@@ -33,6 +34,14 @@ Route::middleware('auth:admin')->group(function () {
         Route::post('/', [CategoryController::class, 'store'])->name('store');
         Route::put('/{category}', [CategoryController::class, 'update'])->name('update');
         Route::delete('/{category}', [CategoryController::class, 'destroy'])->name('destroy');
+    });
+
+    Route::prefix('contacts')->name('contacts.')->group(function () {
+        Route::get('/', [ContactController::class, 'index'])->name('index');
+        Route::patch('/mark-all-as-read', [ContactController::class, 'markAllAsRead'])->name('mark-all-as-read');
+        Route::patch('/{contact}/read', [ContactController::class, 'markAsRead'])->name('mark-as-read');
+        Route::post('/{contact}/reply', [ContactController::class, 'reply'])->name('reply');
+        Route::delete('/{contact}', [ContactController::class, 'destroy'])->name('destroy');
     });
 });
 
