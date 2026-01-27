@@ -27,7 +27,7 @@ class PublishInstagramPostJob implements ShouldQueue
     {
         $user = User::where('email', 'jugal@chetak.ai')->first();
 
-        $imageUrl = asset('storage/' . $this->post->image_path);
+        $imageUrl = asset('public/storage/' . $this->post->image_path);
         Log::info('Image URL: ' . $imageUrl);
         $payload = [
             'post_id' => $this->post->id,
