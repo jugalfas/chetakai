@@ -142,6 +142,16 @@ const togglePostNotifications = () => {
         }
     });
 };
+
+const connectInstagram = () => {
+    window.location.href = route('auth.instagram.redirect');
+};
+
+const getErrorMessage = (error) => {
+    if (error === 'NO_PAGE_FOUND') return 'No Facebook Page found. Ensure you have a Facebook Page created and you selected it during the login process. You may need to click "Edit Settings" in the Facebook popup.';
+    if (error === 'NO_INSTAGRAM_BUSINESS_ACCOUNT') return 'Your Facebook Page is not linked to an Instagram Business account. Please link them in Facebook Page settings and ensure your Instagram is set to "Business".';
+    return error;
+};
 </script>
 
 <template>
@@ -336,10 +346,21 @@ const togglePostNotifications = () => {
                                     <Badge v-if="user.instagram_connected" variant="success">
                                         Connected
                                     </Badge>
-                                    <button v-else size="sm" type="button">
+                                    <button 
+                                        v-else 
+                                        @click="connectInstagram"
+                                        class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover-elevate active-elevate-2 border border-primary-border min-h-9 px-4 py-2 bg-accent text-accent-foreground hover:bg-accent/90 h-9"
+                                        type="button"
+                                    >
                                         Connect
                                     </button>
                                 </div>
+                                 <div v-if="$page.props.flash?.error" class="p-4 rounded-md bg-destructive/10 border border-destructive/20 text-destructive text-sm">
+                                     {{ getErrorMessage($page.props.flash.error) }}
+                                 </div>
+                                 <div v-if="$page.props.flash?.success" class="p-4 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 text-sm">
+                                     {{ $page.props.flash.success }}
+                                 </div>
                                 <div class="space-y-6">
                                     <div class="flex items-center justify-between">
                                         <div class="space-y-1">

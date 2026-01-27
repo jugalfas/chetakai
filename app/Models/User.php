@@ -29,6 +29,7 @@ class User extends Authenticatable
         'instagram_access_token',
         'auto_post_schedule_enabled',
         'post_notifications_enabled',
+        'instagram_business_id',
     ];
 
     /**

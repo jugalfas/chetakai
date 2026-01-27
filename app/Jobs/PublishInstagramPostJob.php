@@ -10,6 +10,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use App\Models\Post;
+use App\Models\User;
 
 class PublishInstagramPostJob implements ShouldQueue
 {
@@ -24,12 +25,19 @@ class PublishInstagramPostJob implements ShouldQueue
 
     public function handle()
     {
+        $user = User::where('email', 'jugal@chetak.ai')->first();
+
         $imageUrl = url('/storage/' . $this->post->image_path);
         $payload = [
+            'post_id' => $this->post->id,
             'image_url' => $imageUrl,
             'caption' => $this->post->caption,
+            'scheduled_at' => $this->post->scheduled_at->toIso8601String(),
+            'instagram_access_token' => decrypt($user->instagram_access_token),
+            'instagram_business_id' => $user->instagram_business_id,
         ];
 
+        /** @var \Illuminate\Http\Client\Response $response */
         $response = Http::timeout(30)->post(env('N8N_INSTAGRAM_WEBHOOK_URL'), $payload);
 
         if ($response->successful()) {
