@@ -3,7 +3,7 @@ import { ref, nextTick, watch, onMounted } from 'vue'
 import axios from 'axios'
 import { Head, router } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
-import { Send, Plus, Sparkles, MessageSquare, User, Bot } from 'lucide-vue-next'
+import { Send, Plus, Sparkles, MessageSquare, User, Bot, Menu, X } from 'lucide-vue-next'
 import { marked } from 'marked'
 
 // Configure marked for markdown parsing
@@ -32,10 +32,12 @@ const input = ref('')
 const selectedConversationId = ref(props.selectedConversation?.id || null)
 const loading = ref(false)
 const conversations = ref(props.conversations || [])
+const isMobileHistoryOpen = ref(false)
 
 // Watch for prop changes (when navigating)
 watch(() => props.selectedConversation, (newConv) => {
     selectedConversationId.value = newConv?.id || null
+    isMobileHistoryOpen.value = false // Close mobile drawer on selection
 }, { immediate: true })
 
 watch(() => props.messages, (newMessages) => {
@@ -159,8 +161,64 @@ onMounted(() => {
     <Head title="AI Chat" />
 
     <AuthenticatedLayout>
-        <div class="h-[calc(100vh-12rem)] flex gap-4">
-            <!-- Sidebar - History -->
+        <div class="h-[calc(100vh-12rem)] flex gap-4 relative">
+            <!-- Mobile History Drawer -->
+            <!-- Backdrop -->
+            <div
+                class="fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" v-if="isMobileHistoryOpen"
+                @click="isMobileHistoryOpen = false"
+            ></div>
+            <div
+                v-if="isMobileHistoryOpen"
+                class="fixed inset-0 z-50 lg:hidden"
+            >
+
+                <!-- Drawer Content -->
+                <div class="fixed z-50 gap-4 shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500 data-[state=open]:animate-in data-[state=closed]:animate-out inset-y-0 left-0 h-full border-r data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left sm:max-w-sm w-72 bg-sidebar border-r-sidebar-border p-6">
+                    <button
+                        @click="isMobileHistoryOpen = false"
+                        class="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary"
+                    >
+                        <X class="h-4 w-4" />
+                    </button>
+                    <div class="flex flex-col space-y-2 text-center sm:text-left mb-6">
+                        <h2 class="text-lg font-semibold text-foreground text-left">Chat History</h2>
+                    </div>
+
+                    <button
+                        @click="createNewChat(); isMobileHistoryOpen = false"
+                        class="inline-flex items-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover-elevate active-elevate-2 border shadow-xs active:shadow-none min-h-9 px-4 py-2 w-full gap-2 border-sidebar-border bg-sidebar hover:bg-sidebar-accent justify-start h-11 mb-4"
+                    >
+                        <Plus class="h-4 w-4" />
+                        New Chat
+                    </button>
+
+                    <div class="flex-1 overflow-y-auto">
+                        <div class="space-y-2">
+                            <button
+                                v-for="conversation in conversations"
+                                :key="conversation.id"
+                                @click="selectConversation(conversation.id)"
+                                :class="[
+                                    'inline-flex items-center gap-2 whitespace-nowrap rounded-md transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover-elevate active-elevate-2 border border-transparent min-h-9 w-full justify-start font-normal text-muted-foreground hover:text-foreground hover:bg-sidebar-accent px-3 py-2 h-auto text-sm',
+                                    selectedConversationId === conversation.id ? 'bg-sidebar-accent text-foreground' : ''
+                                ]"
+                            >
+                                <MessageSquare class="h-4 w-4 mr-2 flex-shrink-0" />
+                                <span class="truncate flex-1 text-left">{{ conversation.title || 'Untitled Chat' }}</span>
+                                <span v-if="conversation.messages_count" class="text-xs text-muted-foreground ml-2">
+                                    {{ conversation.messages_count }}
+                                </span>
+                            </button>
+                            <p v-if="conversations.length === 0" class="text-sm text-muted-foreground px-3 py-2 text-center">
+                                No conversations yet. Start a new chat!
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar - History (Desktop) -->
             <div class="w-64 hidden lg:flex flex-col gap-4">
                 <button
                     @click="createNewChat"
@@ -195,6 +253,26 @@ onMounted(() => {
 
             <!-- Main Chat Area -->
             <div class="flex-1 flex flex-col bg-card border border-border rounded-xl overflow-hidden shadow-sm card-shadow">
+                <!-- Mobile Chat Header -->
+                <div class="lg:hidden flex items-center justify-between p-4 border-b border-border bg-sidebar/50">
+                    <div class="flex items-center gap-3">
+                        <button
+                            @click="isMobileHistoryOpen = true"
+                            class="p-2 hover:bg-sidebar-accent rounded-md transition-colors"
+                        >
+                            <Menu class="h-5 w-5" />
+                        </button>
+                        <h1 class="font-bold text-lg josefin-sans">Chetak AI</h1>
+                    </div>
+                    <button
+                        @click="createNewChat"
+                        class="p-2 hover:bg-sidebar-accent rounded-md transition-colors text-muted-foreground"
+                        title="New Chat"
+                    >
+                        <Plus class="h-5 w-5" />
+                    </button>
+                </div>
+
                 <div id="chat-body" class="flex-1 overflow-y-auto p-4 sm:p-6">
                     <div class="max-w-3xl mx-auto space-y-8">
                         <div v-if="messages.length === 0" class="flex flex-col items-center justify-center py-20 text-center animate-in fade-in zoom-in duration-500">

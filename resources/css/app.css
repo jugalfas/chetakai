@@ -463,3 +463,14 @@ html[dir=ltr] {
 .bg-red-500 {
     background-color: var(--color-red-500);
 }
+
+[data-rich-colors='true'][data-sonner-toast][data-type='error'] {
+    background-color:
+        color-mix(in oklab, #ef4444 15%, transparent) !important;
+    border-color:
+        color-mix(in oklab, #ef4444 50%, transparent) !important;
+}
+
+[data-sonner-toast][data-type="error"] [data-icon] {
+    color: var(--color-red-300) !important;
+}

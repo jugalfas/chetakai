@@ -348,6 +348,7 @@ const scheduleQuote = (quote) => {
                                             </button>
                                             <button 
                                                 @click.stop="scheduleQuote(quote)"
+                                                v-if="quote.post?.status === 'draft'"
                                                 class="flex w-full px-3 py-2 text-start text-sm leading-5 text-white hover:bg-white/10 transition duration-150 ease-in-out focus:outline-none rounded-md"
                                             >
                                                 Schedule

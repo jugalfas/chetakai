@@ -3,6 +3,7 @@ import { router } from '@inertiajs/vue3'
 import { ref, watch, computed } from 'vue'
 import { X } from 'lucide-vue-next'
 import DateTimePicker from './DateTimePicker.vue'
+import { toast } from 'vue-sonner'
 
 const props = defineProps({
     show: Boolean,
@@ -33,7 +34,12 @@ const submit = () => {
         {
             preserveScroll: true,
             onSuccess: () => {
+                toast.success('Post scheduled successfully!')
                 emit('close')
+            },
+            onError: (errors) => {
+                const errorMessage = errors.error || 'Failed to schedule post. Please try again.'
+                toast.error(errorMessage)
             },
         }
     )

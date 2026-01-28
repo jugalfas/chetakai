@@ -32,6 +32,12 @@ const applyTheme = () => {
         document.documentElement.classList.remove('dark');
     }
 };
+
+const mobileMenuOpen = ref(false);
+
+const toggleMobileMenu = () => {
+    mobileMenuOpen.value = !mobileMenuOpen.value;
+};
 </script>
 
 <template>
@@ -65,9 +71,10 @@ const applyTheme = () => {
                         </a>
                     </div>
                     <button
+                        @click="toggleMobileMenu"
                         class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 hover-elevate active-elevate-2 border border-transparent h-9 w-9 lg:hidden"
-                        type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="radix-_r_0_"
-                        data-state="closed"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                        type="button" aria-haspopup="dialog" :aria-expanded="mobileMenuOpen" aria-controls="mobile-menu"
+                        :data-state="mobileMenuOpen ? 'open' : 'closed'"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                             stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-menu h-6 w-6"
                             aria-hidden="true">
@@ -79,6 +86,46 @@ const applyTheme = () => {
                 </div>
             </div>
         </nav>
+
+        <!-- Mobile Menu Overlay -->
+        <div v-if="mobileMenuOpen" 
+            class="fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
+            @click="mobileMenuOpen = false">
+        </div>
+
+        <!-- Mobile Menu Drawer -->
+        <div 
+            id="mobile-menu"
+            :class="[
+                'fixed inset-y-0 right-0 z-[70] w-3/4 sm:max-w-sm bg-background border-l border-border p-6 shadow-2xl transition-transform duration-500 ease-in-out',
+                mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
+            ]"
+        >
+            <button 
+                @click="mobileMenuOpen = false"
+                class="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x h-4 w-4" aria-hidden="true">
+                    <path d="M18 6 6 18"></path>
+                    <path d="m6 6 12 12"></path>
+                </svg>
+                <span class="sr-only">Close</span>
+            </button>
+
+            <div class="flex flex-col gap-6 pt-10">
+                <a href="#features" @click="mobileMenuOpen = false" class="text-xl font-bold josefin-sans hover:text-accent transition-colors">Features</a>
+                <a href="#automation" @click="mobileMenuOpen = false" class="text-xl font-bold josefin-sans hover:text-accent transition-colors">Automation</a>
+                <a href="#pricing" @click="mobileMenuOpen = false" class="text-xl font-bold josefin-sans hover:text-accent transition-colors">Pricing</a>
+                <a href="/contact" @click="mobileMenuOpen = false" class="text-xl font-bold josefin-sans hover:text-accent transition-colors">Contact</a>
+                
+                <a href="/login" class="w-full">
+                    <button class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover-elevate active-elevate-2 border [border-color:var(--button-outline)] shadow-xs active:shadow-none min-h-9 px-4 py-2 w-full">Login</button>
+                </a>
+                <a href="/register" class="w-full">
+                    <button class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover-elevate active-elevate-2 border border-primary-border min-h-9 px-4 py-2 w-full bg-accent text-accent-foreground">Get Started</button>
+                </a>
+            </div>
+        </div>
 
         <slot />
 

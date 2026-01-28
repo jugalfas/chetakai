@@ -167,11 +167,11 @@ class QuoteController extends Controller
         $post = $quote->post;
 
         if (!$post || $post->status !== 'draft') {
-            return response()->json(['error' => 'Post is not available for scheduling'], 400);
+            return back()->withErrors(['error' => 'Post is not available for scheduling']);
         }
 
         if (empty($post->image_path)) {
-            return response()->json(['error' => 'Post image is not ready yet'], 400);
+            return back()->withErrors(['error' => 'Post image is not ready yet']);
         }
 
         DB::transaction(function () use ($request, $post, $quote) {
