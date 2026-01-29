@@ -58,6 +58,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/chat', [ChatController::class, 'store'])->name('chat.store');
     Route::get('/chat/{id}', [ChatController::class, 'show'])->name('chat.show');
     Route::post('/chat/send', [ChatController::class, 'send'])->name('chat.send');
+    Route::patch('/conversations/{id}/rename', [ChatController::class, 'rename'])->name('conversations.rename');
+    Route::delete('/conversations/{id}', [ChatController::class, 'destroyConversation'])->name('conversations.destroy');
+    Route::patch('/conversations/{id}/pin', [ChatController::class, 'pin'])->name('conversations.pin');
+    Route::patch('/messages/{id}/edit', [ChatController::class, 'editMessage'])->name('messages.edit');
+    Route::post('/messages/{id}/regenerate', [ChatController::class, 'regenerateMessage'])->name('messages.regenerate');
+    Route::delete('/messages/{id}', [ChatController::class, 'destroyMessage'])->name('messages.destroy');
 
     Route::post('quotes/generate', [QuoteController::class, 'generate'])->name('quotes.generate');
 
