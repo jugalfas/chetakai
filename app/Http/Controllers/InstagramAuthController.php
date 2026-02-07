@@ -32,6 +32,7 @@ class InstagramAuthController extends Controller
 
         try {
             // 1. Exchange code for User Access Token
+            /** @var \Illuminate\Http\Client\Response $tokenResponse */
             $tokenResponse = Http::get('https://graph.facebook.com/v24.0/oauth/access_token', [
                 'client_id' => config('services.facebook.client_id'),
                 'client_secret' => config('services.facebook.client_secret'),
@@ -47,6 +48,7 @@ class InstagramAuthController extends Controller
             $userAccessToken = $tokenResponse->json()['access_token'];
 
             // 2. Fetch Facebook Pages
+            /** @var \Illuminate\Http\Client\Response $pagesResponse */
             $pagesResponse = Http::get('https://graph.facebook.com/v24.0/me/accounts', [
                 'access_token' => $userAccessToken,
             ]);
@@ -78,23 +80,27 @@ class InstagramAuthController extends Controller
             $igBusinessAccount = $igData['instagram_business_account'] ?? null;
 
             if (!$igBusinessAccount) {
-                // Update user state as not connected if it fails at this step
-                Auth::user()->update([
-                    'instagram_connected' => false,
-                ]);
-                return redirect()->route('profile.edit')->with('error', 'NO_INSTAGRAM_BUSINESS_ACCOUNT');
-            }
-
-            // 5. Save in users table
-            $igUsername = $igBusinessAccount['username'] ?? null;
-
-            Auth::user()->update([
-                'instagram_username' => $igUsername,
-                'instagram_account_type' => 'business',
-                'instagram_connected' => true,
-                'instagram_access_token' => encrypt($pageAccessToken),
-                'instagram_business_id' => $igBusinessAccount['id'],
+            /** @var \App\Models\User $user */
+            $user = Auth::user();
+            // Update user state as not connected if it fails at this step
+            $user->update([
+                'instagram_connected' => false,
             ]);
+            return redirect()->route('profile.edit')->with('error', 'NO_INSTAGRAM_BUSINESS_ACCOUNT');
+        }
+
+        // 5. Save in users table
+        $igUsername = $igBusinessAccount['username'] ?? null;
+
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $user->update([
+            'instagram_username' => $igUsername,
+            'instagram_account_type' => 'business',
+            'instagram_connected' => true,
+            'instagram_access_token' => encrypt($pageAccessToken),
+            'instagram_business_id' => $igBusinessAccount['id'],
+        ]);
 
             return redirect()->route('profile.edit')->with('success', 'Instagram Business account connected successfully!');
 

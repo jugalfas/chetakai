@@ -8,6 +8,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
+/**
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Conversation[] $conversations
+ * @method \Illuminate\Database\Eloquent\Relations\HasMany conversations()
+ */
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */

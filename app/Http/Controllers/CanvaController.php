@@ -3,41 +3,31 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 
 class CanvaController extends Controller
 {
-    // Source - https://stackoverflow.com/q
-    // Posted by Aleks Per, modified by community. See post 'Timeline' for change history
-    // Retrieved 2026-01-04, License - CC BY-SA 4.0
-
-    public function canva()
+    public function connect()
     {
-        $client_id = 'AAG9YASKmYE'; // Replace with your Canva client ID
-        $redirect_uri = 'https://example.com/redirect-canva'; // Your callback URI
-        $scope = 'asset:write'; // Adjust scopes as necessary
-
         // Generate code_verifier and code_challenge
-        $code_verifier = $this->generateCodeVerifier();
+        $code_verifier = $this->generateCodeVerifier(32);
         $code_challenge = $this->generateCodeChallenge($code_verifier);
 
         // Store the code_verifier in session
         session(['code_verifier' => $code_verifier]);
-        $state = bin2hex(random_bytes(16)); // Generate a random state
+        $state = csrf_token(); // Generate a random state
         session(['oauth_state' => $state]);
 
-        // Build the authorization URL
-        $authorization_url = 'https://www.canva.com/api/oauth/authorize?' . http_build_query([
+        $query = http_build_query([
+            'client_id'     => config('services.canva.client_id'),
+            'redirect_uri'  => config('services.canva.redirect'),
             'response_type' => 'code',
-            'client_id' => $client_id,
-            'redirect_uri' => $redirect_uri,
-            'scope' => $scope,
+            'scope'         => 'asset:read asset:write design:meta:read design:content:write',
             'code_challenge' => $code_challenge,
-            'code_challenge_method' => 'S256',
+            'code_challenge_method' => 's256',
             'state' => $state,
         ]);
-
-        // Redirect to Canva's OAuth page
-        return redirect($authorization_url);
+        return redirect("https://www.canva.com/api/oauth/authorize?$query");
     }
 
     private function generateCodeVerifier($length = 128)
@@ -50,77 +40,95 @@ class CanvaController extends Controller
         return rtrim(strtr(base64_encode(hash('sha256', $code_verifier, true)), '+/', '-_'), '=');
     }
 
-
-
-    public function redirect_canva(Request $request)
+    public function callback(Request $request)
     {
-        // Retrieve the authorization code and state from the request
-        $code = $request->input('code');
-        $state = $request->input('state');
+        /** @var \Illuminate\Http\Client\Response $response */
+        $response = Http::asForm()->post(
+            'https://api.canva.com/rest/v1/oauth/token',
+            [
+                'grant_type'    => 'authorization_code',
+                'client_id'     => config('services.canva.client_id'),
+                'client_secret' => config('services.canva.client_secret'),
+                'redirect_uri'  => config('services.canva.redirect'),
+                'code'          => $request->code,
+                'code_verifier' => session('code_verifier'), // REQUIRED
+            ]
+        );
 
-        // Retrieve the stored code_verifier and state from the session
-        $stored_state = session('oauth_state');
-        $code_verifier = session('code_verifier');  // Retrieve the same code_verifier
-
-        // Ensure the state matches to prevent CSRF attacks
-        if ($state !== $stored_state) {
-            return response('Invalid state parameter', 400);
+        if (! $response->successful()) {
+            dd(
+                $response->status(),
+                $response->body()
+            );
         }
 
-        // Ensure the authorization code is present
-        if (!$code) {
-            return response('No authorization code found', 400);
+        session([
+            'canva_token' => $response->json()['access_token']
+        ]);
+
+        return redirect('/canva/editor');
+    }
+
+    public function editor()
+    {
+        $designId = 'DAG_qpPQTXc';
+        $encodedId = urlencode($designId);
+
+        /** @var \Illuminate\Http\Client\Response $response */
+        $response = Http::withToken(session('canva_token'))
+            ->get("https://api.canva.com/rest/v1/designs/{$encodedId}");
+
+        if (!$response->successful()) {
+            // If the design doesn't exist or token is invalid, show error
+            dd($response->status(), $response->json());
         }
 
-        // Canva API OAuth Token endpoint
-        $token_url = "https://api.canva.com/rest/v1/oauth/token";
+        $designData = $response->json();
+        $editUrl = $designData['design']['urls']['edit_url'];
 
-        // Base64-encode client_id:client_secret
-        $client_id = 'AAG9YASKmYE'; // Replace with your actual Canva client ID
-        $client_secret = 'asdasdasdasdasdasd'; // Replace with your actual Canva client secret
-        $credentials = base64_encode("$client_id:$client_secret");
+        // Step 2: Prepare correlation_state (must be 50 chars or less, URL safe)
+        $correlationState = bin2hex(random_bytes(16));
+        session(['canva_correlation_state' => $correlationState]);
 
-        // Construct the POST fields exactly like in the cURL command you provided
-        $post_fields = "grant_type=authorization_code"
-            . "&code_verifier=" . urlencode($code_verifier) // Properly URL encode the code_verifier
-            . "&code=" . urlencode($code) // Properly URL encode the authorization code
-            . "&redirect_uri=" . urlencode('https://example.com/redirect-canva'); // Properly URL encode the redirect_uri
+        // Append correlation_state to the edit_url
+        $finalUrl = $editUrl . (strpos($editUrl, '?') !== false ? '&' : '?') . 'correlation_state=' . $correlationState;
 
-        // Initialize cURL request
-        $curl = curl_init();
-        curl_setopt_array($curl, array(
-            CURLOPT_URL => $token_url,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_CUSTOMREQUEST => "POST",
-            CURLOPT_HTTPHEADER => array(
-                'Authorization: Basic ' . $credentials, // Base64-encoded client_id:client_secret
-                'Content-Type: application/x-www-form-urlencoded',
-            ),
-            CURLOPT_POSTFIELDS => $post_fields, // Use raw POSTFIELDS string
-        ));
+        return redirect($finalUrl);
+    }
 
-        // Execute the cURL request
-        $response = curl_exec($curl);
-        $err = curl_error($curl);
-        curl_close($curl);
+    public function design(Request $request)
+    {
+        $correlationJwt = $request->query('correlation_jwt');
 
-        // Check for cURL errors
-        if ($err) {
-            return response('cURL Error: ' . htmlspecialchars($err), 500);
+        if (!$correlationJwt) {
+            return response('Missing correlation_jwt', 400);
         }
 
-        // Parse the response
-        $response_data = json_decode($response, true);
-
-        if (isset($response_data['access_token'])) {
-            // Store the access token in the session or database
-            session(['canva_access_token' => $response_data['access_token']]);
-
-            // Redirect to a success page
-            return redirect('/some-success-page'); // Replace with your desired redirection
-        } else {
-            // Output the full response for debugging
-            return response('Error obtaining access token: ' . json_encode($response_data), 400);
+        // Canva returns a JWS (JSON Web Signature)
+        // For simple state verification, we can decode the payload (second part of the JWT)
+        $parts = explode('.', $correlationJwt);
+        if (count($parts) !== 3) {
+            return response('Invalid JWT format', 400);
         }
+
+        $payload = json_decode(base64_decode(strtr($parts[1], '-_', '+/')), true);
+
+        if (!$payload) {
+            return response('Failed to decode JWT payload', 400);
+        }
+
+        $designId = $payload['design_id'] ?? null;
+        $returnedState = $payload['correlation_state'] ?? null;
+        $storedState = session('canva_correlation_state');
+
+        // Verify correlation_state
+        if ($returnedState !== $storedState) {
+            return response('Invalid correlation state', 403);
+        }
+
+        return view('canva.success', [
+            'design_id' => $designId,
+            'message' => 'Successfully returned from Canva!'
+        ]);
     }
 }

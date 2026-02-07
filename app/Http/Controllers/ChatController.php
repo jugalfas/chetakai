@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Conversation;
 use App\Models\Message;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -14,7 +15,10 @@ class ChatController extends Controller
 {
     public function index(Request $request)
     {
-        $conversations = auth()->user()->conversations()
+        /** @var \App\Models\User $user */
+        $user = $request->user();
+
+        $conversations = $user->conversations()
             ->whereNull('deleted_at')
             ->withCount(['messages' => function ($query) {
                 $query->where('is_superseded', 0);
@@ -27,7 +31,7 @@ class ChatController extends Controller
         $messages = [];
 
         if ($request->has('conversation_id')) {
-            $selectedConversation = auth()->user()->conversations()
+            $selectedConversation = $user->conversations()
                 ->find($request->conversation_id);
 
             if ($selectedConversation) {
@@ -51,7 +55,10 @@ class ChatController extends Controller
 
     public function show(Request $request, $id)
     {
-        $conversation = auth()->user()->conversations()->findOrFail($id);
+        /** @var \App\Models\User $user */
+        $user = $request->user();
+
+        $conversation = $user->conversations()->findOrFail($id);
 
         $query = $conversation->messages();
         
@@ -70,8 +77,11 @@ class ChatController extends Controller
 
     public function store(Request $request)
     {
+        /** @var \App\Models\User $user */
+        $user = $request->user();
+
         $conversation = Conversation::create([
-            'user_id' => auth()->id(),
+            'user_id' => $user->id,
             'title' => null, // Create with null title as requested
         ]);
 
@@ -82,6 +92,9 @@ class ChatController extends Controller
 
     public function send(Request $request)
     {
+        /** @var \App\Models\User $user */
+        $user = $request->user();
+
         $request->validate([
             'message' => 'required|string',
             'conversation_id' => 'nullable|exists:conversations,id',
@@ -89,10 +102,10 @@ class ChatController extends Controller
 
         $conversation = null;
         if ($request->conversation_id) {
-            $conversation = auth()->user()->conversations()->findOrFail($request->conversation_id);
+            $conversation = $user->conversations()->findOrFail($request->conversation_id);
         } else {
             $conversation = Conversation::create([
-                'user_id' => auth()->id(),
+                'user_id' => $user->id,
                 'title' => null,
             ]);
         }
@@ -128,6 +141,7 @@ class ChatController extends Controller
     private function generateAiTitle(Conversation $conversation, $firstMessage)
     {
         try {
+            /** @var \Illuminate\Http\Client\Response $response */
             $response = Http::post(env('N8N_WEBHOOK_URL'), [
                 'message' => "Generate a short, concise 3-5 word title for a chat that starts with this message: \"" . $firstMessage . "\". Respond ONLY with the title.",
                 'history' => [],
@@ -162,6 +176,7 @@ class ChatController extends Controller
             ->values();
 
         try {
+            /** @var \Illuminate\Http\Client\Response $response */
             $response = Http::post(env('N8N_WEBHOOK_URL'), [
                 'message' => $parentMessage->content,
                 'history' => $history,
@@ -204,8 +219,11 @@ class ChatController extends Controller
 
     public function rename(Request $request, $id)
     {
+        /** @var \App\Models\User $user */
+        $user = $request->user();
+
         $request->validate(['title' => 'required|string|max:255']);
-        $conversation = auth()->user()->conversations()->findOrFail($id);
+        $conversation = $user->conversations()->findOrFail($id);
         $conversation->update(['title' => $request->title]);
 
         return response()->json($conversation);
@@ -213,7 +231,10 @@ class ChatController extends Controller
 
     public function destroyConversation($id)
     {
-        $conversation = auth()->user()->conversations()->findOrFail($id);
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        $conversation = $user->conversations()->findOrFail($id);
         $conversation->delete();
 
         return response()->json(['message' => 'Conversation deleted']);
@@ -221,7 +242,10 @@ class ChatController extends Controller
 
     public function pin($id)
     {
-        $conversation = auth()->user()->conversations()->findOrFail($id);
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        $conversation = $user->conversations()->findOrFail($id);
         $conversation->update(['pinned' => !$conversation->pinned]);
 
         return response()->json($conversation);
@@ -270,10 +294,13 @@ class ChatController extends Controller
         return $this->processAiResponse($conversation, $parentMessage);
     }
 
-    public function destroyMessage($id)
+    public function destroyMessage(Request $request, $id)
     {
-        $message = Message::whereHas('conversation', function ($query) {
-            $query->where('user_id', auth()->id());
+        /** @var \App\Models\User $user */
+        $user = $request->user();
+
+        $message = Message::whereHas('conversation', function ($query) use ($user) {
+            $query->where('user_id', $user->id);
         })->findOrFail($id);
 
         $message->delete();
