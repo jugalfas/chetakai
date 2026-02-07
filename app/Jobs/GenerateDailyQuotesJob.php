@@ -21,9 +21,9 @@ class GenerateDailyQuotesJob implements ShouldQueue
     public function handle()
     {
         Log::info('Starting quote generation');
-/** @var \Illuminate\Http\Client\Response $response */
+        /** @var \Illuminate\Http\Client\Response $response */
         $response = Http::post(env('N8N_GENERATE_QUOTE_URL'), [
-            'number_of_quotes' => 5
+            'number_of_quotes' => 1
         ]);
 
         if ($response->successful()) {
