@@ -227,4 +227,14 @@ class QuoteController extends Controller
 
         return redirect()->back()->with('success', 'Quote deleted successfully.');
     }
+
+    // Render quote
+    public function render($id)
+    {
+        $quote = Quote::findOrFail($id);
+
+        return view('quote-render', [
+            'quote' => $quote->quote
+        ]);
+    }
 }

@@ -5,6 +5,8 @@ namespace App\Jobs;
 use App\Models\Category;
 use App\Models\Post;
 use App\Models\Quote;
+use App\Services\QuoteImageService;
+use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -20,6 +22,7 @@ class GenerateDailyQuotesJob implements ShouldQueue
 
     public function handle()
     {
+        $scheduled_at = Carbon::today()->setTime(9, 0, 0);
         Log::info('Starting quote generation');
         $recentQuotes = Quote::latest()
             ->take(40)
@@ -34,6 +37,12 @@ class GenerateDailyQuotesJob implements ShouldQueue
 
         if ($response->successful()) {
             $quotes = $response->json('quotes');
+            if (!isset($quotes[0]['text'])) {
+                Log::warning('Quote text is empty. Retrying...');
+                $this->release(10);
+                return;
+            }
+
             $savedCount = 0;
             $exists = Quote::where('quote', $quotes[0]['text'])->exists();
 
@@ -58,9 +67,14 @@ class GenerateDailyQuotesJob implements ShouldQueue
                     'generated_at' => now(),
                 ]);
 
+                $imageUrl = QuoteImageService::generate($quotes[0]['text']);
+
                 Post::create([
                     'quote_id' => $quote_db->id,
                     'caption' => $quotes[0]['caption'] ?? null,
+                    'image_path' => $imageUrl,
+                    'scheduled_at' => $scheduled_at,
+                    'status' => 'scheduled',
                 ]);
             }
 
