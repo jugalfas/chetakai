@@ -21,36 +21,47 @@ class GenerateDailyQuotesJob implements ShouldQueue
     public function handle()
     {
         Log::info('Starting quote generation');
+        $recentQuotes = Quote::latest()
+            ->take(40)
+            ->pluck('quote')
+            ->values();
+
         /** @var \Illuminate\Http\Client\Response $response */
         $response = Http::post(env('N8N_GENERATE_QUOTE_URL'), [
-            'number_of_quotes' => 1
+            'number_of_quotes' => 1,
+            'recent_quotes' => $recentQuotes,
         ]);
 
         if ($response->successful()) {
             $quotes = $response->json('quotes');
             $savedCount = 0;
+            $exists = Quote::where('quote', $quotes[0]['text'])->exists();
 
-            foreach ($quotes as $quote) {
-                if (!empty($quote['text'])) {
-                    // Store the quote
-                    $savedCount++;
+            if ($exists) {
+                Log::warning('Duplicate quote detected. Retrying...');
+                $this->release(10);
+                return;
+            }
 
-                    $category = Category::firstOrCreate([
-                        'name' => $quote['category'],
-                    ], ['slug' => strtolower($quote['category'])]);
+            if (!empty($quotes[0]['text'])) {
+                // Store the quote
+                $savedCount++;
 
-                    $quote_db = Quote::create([
-                        'quote' => $quote['text'],
-                        'category' => $category->id,
-                        'status' => 'unused',
-                        'generated_at' => now(),
-                    ]);
+                $category = Category::firstOrCreate([
+                    'name' => $quotes[0]['category'],
+                ], ['slug' => strtolower($quotes[0]['category'])]);
 
-                    Post::create([
-                        'quote_id' => $quote_db->id,
-                        'caption' => $quote['caption'] ?? null,
-                    ]);
-                }
+                $quote_db = Quote::create([
+                    'quote' => $quotes[0]['text'],
+                    'category' => $category->id,
+                    'status' => 'unused',
+                    'generated_at' => now(),
+                ]);
+
+                Post::create([
+                    'quote_id' => $quote_db->id,
+                    'caption' => $quotes[0]['caption'] ?? null,
+                ]);
             }
 
             Log::info("{$savedCount} quotes saved.");
