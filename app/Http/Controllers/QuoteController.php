@@ -153,7 +153,7 @@ class QuoteController extends Controller
     {
         $post = $quote->post;
 
-        if (!$post || $post->status !== 'draft') {
+        if (!$post || $post->status === 'posted') {
             return back()->withErrors(['error' => 'Post is not available for scheduling']);
         }
 

@@ -8,6 +8,9 @@ import SecondaryButton from "@/Components/SecondaryButton.vue";
 import TextInput from "@/Components/TextInput.vue";
 import { Head, router, Link } from "@inertiajs/vue3";
 import { ref, watch, computed } from "vue";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+dayjs.extend(relativeTime);
 import {
     TrashIcon,
     MagnifyingGlassIcon,
@@ -90,6 +93,11 @@ const filterDescription = computed(() => {
         return '';
     }
 });
+
+const formatDate = (date) => {
+    if (!date) return '';
+    return dayjs(date).format('MMM D, YYYY [at] h:mm A');
+};
 
 const showEditModal = ref(false);
 const showDeleteConfirmModal = ref(false);
@@ -327,6 +335,7 @@ const scheduleQuote = (quote) => {
                                     </svg>
                                     <span class="capitalize">
                                         {{ quote.post?.status === 'posted' ? 'Published' : (quote.post?.status || 'Draft') }}
+                                        {{ quote.post?.scheduled_at ? ' for ' + formatDate(quote.post.scheduled_at) : '' }}
                                     </span>
                                 </div>
                             </div>
@@ -348,7 +357,7 @@ const scheduleQuote = (quote) => {
                                             </button>
                                             <button 
                                                 @click.stop="scheduleQuote(quote)"
-                                                v-if="quote.post?.status === 'draft'"
+                                                v-if="quote.post?.status !== 'posted'"
                                                 class="flex w-full px-3 py-2 text-start text-sm leading-5 text-white hover:bg-white/10 transition duration-150 ease-in-out focus:outline-none rounded-md"
                                             >
                                                 Schedule
