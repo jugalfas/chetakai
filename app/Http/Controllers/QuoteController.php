@@ -124,39 +124,25 @@ class QuoteController extends Controller
         ]);
     }
 
-    public function generate(Request $request)
+    public function store(Request $request)
     {
-        /** @var \Illuminate\Http\Client\Response $response */
-        $response = Http::timeout(60)->post(env('N8N_GENERATE_QUOTE_URL'), $request->all());
-
-        if (!$response->successful()) {
-            return response()->json([
-                'error' => 'AI generation failed'
-            ], 500);
-        }
-
-        $data = $response->json();
-
-        // Guard against bad AI response
-        if (
-            empty($data['quote']) ||
-            empty($data['category']) ||
-            empty($data['mood'])
-        ) {
-            return response()->json([
-                'error' => 'Invalid AI response'
-            ], 500);
-        }
-
         $category = Category::firstOrCreate([
-            'name' => $data['category'],
+            'name' => $request->category
         ]);
 
-        Quote::create([
-            'quote' => $data['quote'],
+        $quote = Quote::create([
+            'quote' => $request->quote,
             'category' => $category->id,
-            'mood' => $data['mood'],
             'status' => 'unused',
+            'generated_at' => now(),
+        ]);
+
+        Post::create([
+            'quote_id' => $quote->id,
+            'caption' => $request->caption,
+            'image_path' => $request->image_url, // IMPORTANT: full URL
+            'scheduled_at' => now()->setTime(9, 0),
+            'status' => 'scheduled'
         ]);
 
         return response()->json(['success' => true]);
