@@ -140,6 +140,7 @@ class QuoteController extends Controller
         Post::create([
             'quote_id' => $quote->id,
             'caption' => $request->caption,
+            'hook' => $request->hook,
             'image_path' => $request->image_url, // IMPORTANT: full URL
             'scheduled_at' => now()->setTime(9, 0),
             'status' => 'scheduled'

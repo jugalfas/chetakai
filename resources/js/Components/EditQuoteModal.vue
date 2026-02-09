@@ -49,7 +49,8 @@ watch(
             form.category = q.category?.toString() || ''
             
             form.caption = q.post?.caption || ''
-            form.image = null
+            form.hook = q.post?.hook || ''
+            form.image = q.post?.image_path || null
             form.tags = '' // Default empty for now
 
             // Set initial preview if quote has an image

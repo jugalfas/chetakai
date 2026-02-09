@@ -20,7 +20,11 @@ class Quote extends Model
     public function getImageUrlAttribute()
     {
         if ($this->post && $this->post->image_path) {
-            return asset('storage/' . $this->post->image_path);
+            $path = $this->post->image_path;
+            if (filter_var($path, FILTER_VALIDATE_URL)) {
+                return $path;
+            }
+            return asset('storage/' . $path);
         }
         return null;
     }

@@ -13,6 +13,7 @@ class Post extends Model
         'quote_id',
         'caption',
         'image_path',
+        'hook',
         'type',
         'scheduled_at',
         'status',
