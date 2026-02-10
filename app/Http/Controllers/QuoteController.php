@@ -186,6 +186,12 @@ class QuoteController extends Controller
     // DELETE quote
     public function destroy(Quote $quote)
     {
+        // Check if the quote has a post
+        if ($quote->post) {
+            // Delete the associated post
+            $quote->post->delete();
+        }
+
         $quote->delete();
 
         return redirect()->back()->with('success', 'Quote deleted successfully.');
