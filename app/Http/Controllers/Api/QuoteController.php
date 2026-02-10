@@ -13,6 +13,18 @@ class QuoteController extends Controller
 {
     public function store(Request $request)
     {
+        $imagePath = null;
+
+        if ($request->hasFile('image')) {
+            $file = $request->file('image');
+
+            // generate unique name
+            $filename = 'quote_' . time() . '_' . Str::random(6) . '.' . $file->getClientOriginalExtension();
+
+            // store in storage/app/public/quotes
+            $imagePath = $file->storeAs('quotes', $filename, 'public');
+        }
+
         $category = Category::firstOrCreate([
             'name' => $request->category,
             'slug' => Str::slug($request->category),
@@ -29,7 +41,7 @@ class QuoteController extends Controller
             'quote_id' => $quote->id,
             'caption' => $request->caption,
             'hook' => $request->hook,
-            'image_path' => $request->image_url, // IMPORTANT: full URL
+            'image_path' => asset('storage/' . $imagePath), // IMPORTANT: full URL
             'scheduled_at' => now()->setTime(9, 0),
             'status' => 'scheduled'
         ]);
