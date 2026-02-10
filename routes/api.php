@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\QuoteController;
+use App\Http\Controllers\Api\QuoteController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -9,3 +9,4 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 Route::post('/quotes', [QuoteController::class, 'store']);
+Route::get('/get_quotes', [QuoteController::class, 'getQuotes']);

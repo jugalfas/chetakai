@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 
 class QuoteController extends Controller
@@ -122,31 +123,6 @@ class QuoteController extends Controller
             'allCategoriesCount' => $allCategoriesCount,
             'canvaClientId' => config('services.canva.client_id'),
         ]);
-    }
-
-    public function store(Request $request)
-    {
-        $category = Category::firstOrCreate([
-            'name' => $request->category
-        ]);
-
-        $quote = Quote::create([
-            'quote' => $request->quote,
-            'category' => $category->id,
-            'status' => 'unused',
-            'generated_at' => now(),
-        ]);
-
-        Post::create([
-            'quote_id' => $quote->id,
-            'caption' => $request->caption,
-            'hook' => $request->hook,
-            'image_path' => $request->image_url, // IMPORTANT: full URL
-            'scheduled_at' => now()->setTime(9, 0),
-            'status' => 'scheduled'
-        ]);
-
-        return response()->json(['success' => true]);
     }
 
     public function schedule(SchedulePostRequest $request, Quote $quote)
