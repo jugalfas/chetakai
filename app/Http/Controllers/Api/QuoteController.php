@@ -17,12 +17,8 @@ class QuoteController extends Controller
 
         if ($request->hasFile('image')) {
             $file = $request->file('image');
-
-            // generate unique name
-            $filename = 'quote_' . time() . '_' . Str::random(6) . '.' . $file->getClientOriginalExtension();
-
-            // store in storage/app/public/quotes
-            $imagePath = $file->storeAs('quotes', $filename, 'public');
+            $filename = 'quote_' . time() . '_' . Str::random(6) . '.png';
+            $imagePath = $file->storeAs('posts', $filename, 'public');
         }
 
         $category = Category::firstOrCreate([
