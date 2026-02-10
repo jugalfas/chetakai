@@ -18,13 +18,14 @@ class InstagramScheduledPostsCommand extends Command
         try {
             $posts = Post::where('status', 'scheduled')
                ->where('scheduled_at', '<=', Carbon::now())
-               ->get();
+               ->whereNotNull('image_path')
+               ->first();
 
-            foreach ($posts as $post) {
-               PublishInstagramPostJob::dispatch($post);
+            if ($posts) {
+               PublishInstagramPostJob::dispatch($posts);
             }
 
-            Log::info('Dispatched ' . $posts->count() . ' jobs.');
+            Log::info('Dispatched 1 job.');
         } catch (\Exception $e) {
             $this->error('Error: ' . $e->getMessage());
             Log::error('Command error: ' . $e->getMessage());
