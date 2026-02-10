@@ -41,6 +41,6 @@ class QuoteController extends Controller
     {
         $quotes = Quote::latest()->limit(40)->pluck('quote');
 
-        return response()->json($quotes);
+        return response()->json(["quotes" => $quotes]);
     }
 }
