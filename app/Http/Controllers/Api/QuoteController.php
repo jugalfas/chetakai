@@ -51,4 +51,18 @@ class QuoteController extends Controller
 
         return response()->json(["quotes" => $quotes]);
     }
+
+    public function update_media_id_in_post(Request $request)
+    {
+        $post = Post::find($request->post_id);
+
+        if (!$post) {
+            return response()->json(['success' => false, 'message' => 'Post not found']);
+        }
+
+        $post->media_id = $request->media_id;
+        $post->save();
+
+        return response()->json(['success' => true]);
+    }
 }

@@ -10,3 +10,4 @@ Route::get('/user', function (Request $request) {
 
 Route::post('/quotes', [QuoteController::class, 'store']);
 Route::get('/get_quotes', [QuoteController::class, 'getQuotes']);
+Route::post('/update_media_id_in_post', [QuoteController::class, 'update_media_id_in_post']);
