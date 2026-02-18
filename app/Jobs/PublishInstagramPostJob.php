@@ -31,6 +31,7 @@ class PublishInstagramPostJob implements ShouldQueue
             'post_id' => $this->post->id,
             'image_url' => $this->post->image_path,
             'caption' => $this->post->caption,
+            'container_id' => $this->post->container_id,
             'scheduled_at' => $this->post->scheduled_at->toIso8601String(),
             'instagram_access_token' => decrypt($user->instagram_access_token),
             'instagram_business_id' => $user->instagram_business_id,

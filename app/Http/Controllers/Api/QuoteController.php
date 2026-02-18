@@ -13,9 +13,11 @@ class QuoteController extends Controller
 {
     public function store(Request $request)
     {
+        $contentType = $request->input('content_type', 'image'); // default image
         $imagePath = null;
 
-        if ($request->hasFile('image')) {
+        // Only image posts will upload image
+        if ($contentType === 'image' && $request->hasFile('image')) {
             $file = $request->file('image');
             $filename = 'quote_' . time() . '_' . Str::random(6) . '.png';
             $imagePath = $file->storeAs('posts', $filename, 'public');
@@ -33,16 +35,54 @@ class QuoteController extends Controller
             'generated_at' => now(),
         ]);
 
-        Post::create([
-            'quote_id' => $quote->id,
-            'caption' => $request->caption,
-            'hook' => $request->hook,
-            'image_path' => asset('storage/' . $imagePath), // IMPORTANT: full URL
-            'scheduled_at' => now()->setTime(9, 0),
-            'status' => 'scheduled'
-        ]);
+        /*
+    |--------------------------------------------------------------------------
+    | POST CREATION LOGIC SPLIT
+    |--------------------------------------------------------------------------
+    */
 
-        return response()->json(['success' => true]);
+        if ($contentType === 'image') {
+
+            // Current behaviour (unchanged)
+            Post::create([
+                'quote_id' => $quote->id,
+                'caption' => $request->caption,
+                'hook' => $request->hook,
+                'content_type' => 'image',
+                'image_path' => asset('storage/' . $imagePath),
+                'scheduled_at' => now()->setTime(9, 0),
+                'status' => 'scheduled',
+                'render_status' => 'completed',
+                'upload_status' => 'waiting',
+            ]);
+        } else {
+
+            // Reel draft (VERY IMPORTANT)
+            Post::create([
+                'quote_id' => $quote->id,
+                'caption' => $request->caption,
+                'hook' => $request->hook,
+                'content_type' => 'reel',
+
+                // NO VIDEO YET
+                'video_path' => null,
+                'audio_path' => null,
+                'duration' => null,
+
+                // This tells n8n: render video first
+                'render_status' => 'pending',
+
+                // do NOT schedule yet
+                'scheduled_at' => null,
+                'status' => 'draft',
+                'upload_status' => 'waiting',
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'content_type' => $contentType
+        ]);
     }
 
     public function getQuotes(Request $request)
@@ -52,7 +92,7 @@ class QuoteController extends Controller
         return response()->json(["quotes" => $quotes]);
     }
 
-    public function update_media_id_in_post(Request $request)
+    public function update_container_id_in_post(Request $request)
     {
         $post = Post::find($request->post_id);
 
@@ -60,7 +100,7 @@ class QuoteController extends Controller
             return response()->json(['success' => false, 'message' => 'Post not found']);
         }
 
-        $post->media_id = $request->media_id;
+        $post->container_id = $request->container_id;
         $post->save();
 
         return response()->json(['success' => true]);
