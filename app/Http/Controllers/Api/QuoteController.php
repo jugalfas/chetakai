@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Post;
 use App\Models\Quote;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -65,4 +66,26 @@ class QuoteController extends Controller
 
         return response()->json(['success' => true]);
     }
+
+    public function get_post_for_upload(Request $request)
+    {
+        $user = User::where('email', 'jugal@chetak.ai')->first();
+        $post = Post::where('status', 'scheduled')->whereDate('scheduled_at', now())->first();
+
+        if (!$post) {
+            return response()->json(['success' => false, 'message' => 'No scheduled posts found']);
+        }
+
+        $payload = [
+            'post_id' => $post->id,
+            'image_url' => $post->image_path,
+            'caption' => $post->caption,
+            'scheduled_at' => $post->scheduled_at->toIso8601String(),
+            'instagram_access_token' => decrypt($user->instagram_access_token),
+            'instagram_business_id' => $user->instagram_business_id,
+        ];
+        return response()->json($payload);
+    }
 }
+
+
