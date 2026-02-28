@@ -1,14 +1,13 @@
 <?php
 
-use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\InstagramAuthController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\QuoteController;
+use App\Http\Controllers\PostController;
+use App\Http\Controllers\PromptController;
 use App\Models\Post;
-use App\Models\Quote;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -65,24 +64,23 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/messages/{id}/regenerate', [ChatController::class, 'regenerateMessage'])->name('messages.regenerate');
     Route::delete('/messages/{id}', [ChatController::class, 'destroyMessage'])->name('messages.destroy');
 
-    Route::post('quotes/generate', [QuoteController::class, 'generate'])->name('quotes.generate');
+    Route::resource('posts', PostController::class)
+        ->except(['show', 'create', 'edit'])
+        ->names('quotes')
+        ->parameters(['posts' => 'post']);
+    Route::post('posts/{post}/schedule', [PostController::class, 'schedule'])->name('quotes.schedule');
+    Route::get('/render/quote/{id}', [PostController::class, 'render']);
 
-    Route::resource('quotes', QuoteController::class)->except(['show', 'create', 'edit']);
-    Route::post('quotes/{quote}/schedule', [QuoteController::class, 'schedule'])->name('quotes.schedule');
-    Route::get('/render/quote/{id}', [QuoteController::class, 'render']);
-
-    Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
-    Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
-    Route::put('/categories/{category}', [CategoryController::class, 'update'])->name('categories.update');
-    Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
+    Route::resource('prompts', PromptController::class)->except(['show', 'create', 'edit', 'store']);
+    Route::post('prompts/bulk', [PromptController::class, 'bulk'])->name('prompts.bulk');
 });
 
 Route::get('/dashboard', function () {
-    $quotes = Quote::count();
+    $posts = Post::count();
     $scheduledPosts = Post::where('status', 'scheduled')->count();
     $postedPosts = Post::where('status', 'posted')->count();
     return Inertia::render('Dashboard', [
-        'quotes' => $quotes,
+        'posts' => $posts,
         'scheduledPosts' => $scheduledPosts,
         'postedPosts' => $postedPosts,
     ]);

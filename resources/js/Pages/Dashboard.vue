@@ -13,7 +13,7 @@ import {
 toast.success('Welcome to the dashboard 🚀')
 
 const props = defineProps({
-    quotes: Number,
+    posts: Number,
     scheduledPosts: Number,
     postedPosts: Number,
 });
@@ -21,8 +21,8 @@ const props = defineProps({
 // Mock data - in a real app, this would come from props
 const stats = [
     {
-        name: 'Total Quotes',
-        value: props.quotes,
+        name: 'Total Posts',
+        value: props.posts,
         icon: SparklesIcon,
     },
     {
@@ -40,8 +40,8 @@ const stats = [
 const recentActivity = [
     {
         id: 1,
-        type: 'quote_created',
-        message: 'New quote "Success is not final..." created',
+        type: 'post_created',
+        message: 'New post "Success is not final..." created',
         time: '2 minutes ago',
     },
     {
@@ -58,8 +58,8 @@ const recentActivity = [
     },
     {
         id: 4,
-        type: 'quote_edited',
-        message: 'Quote #1234 updated',
+        type: 'post_edited',
+        message: 'Post #1234 updated',
         time: '2 hours ago',
     },
 ];
@@ -122,14 +122,14 @@ const categoryInsights = [
                                                 <span
                                                     class="h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-background"
                                                     :class="{
-                                                        'bg-blue-500': activity.type === 'quote_created',
+                                                        'bg-blue-500': activity.type === 'post_created',
                                                         'bg-green-500': activity.type === 'post_scheduled',
                                                         'bg-purple-500': activity.type === 'category_added',
-                                                        'bg-yellow-500': activity.type === 'quote_edited',
+                                                        'bg-yellow-500': activity.type === 'post_edited',
                                                     }"
                                                 >
                                                     <component
-                                                        :is="activity.type === 'quote_created' ? SparklesIcon :
+                                                        :is="activity.type === 'post_created' ? SparklesIcon :
                                                              activity.type === 'post_scheduled' ? CalendarDaysIcon :
                                                              activity.type === 'category_added' ? TagIcon :
                                                              ChatBubbleLeftRightIcon"
@@ -167,7 +167,7 @@ const categoryInsights = [
                                         <span :class="['h-3 w-3 rounded-full mr-3', category.color]"></span>
                                         <p class="text-sm font-medium text-gray-300">{{ category.name }}</p>
                                     </div>
-                                    <p class="text-sm text-gray-400">{{ category.count }} quotes ({{ category.percentage }}%)</p>
+                                    <p class="text-sm text-gray-400">{{ category.count }} posts ({{ category.percentage }}%)</p>
                                 </li>
                             </ul>
                         </div>

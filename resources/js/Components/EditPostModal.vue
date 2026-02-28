@@ -2,68 +2,40 @@
 import { useForm } from '@inertiajs/vue3'
 import { watch, ref, onUnmounted } from 'vue'
 import { toast } from 'vue-sonner'
-import {
-    SelectContent,
-    SelectGroup,
-    SelectItem,
-    SelectItemIndicator,
-    SelectItemText,
-    SelectLabel,
-    SelectPortal,
-    SelectRoot,
-    SelectScrollDownButton,
-    SelectScrollUpButton,
-    SelectSeparator,
-    SelectTrigger,
-    SelectValue,
-    SelectViewport,
-} from 'radix-vue'
-import { ChevronDown, Check, X, Image as ImageIcon } from 'lucide-vue-next'
+import { X, Image as ImageIcon } from 'lucide-vue-next'
 
 const props = defineProps({
     show: Boolean,
-    quote: Object,
-    categories: Array,
+    post: Object,
 })
 
 const emit = defineEmits(['close'])
 
 const form = useForm({
     quote: '',
-    category: '',
     caption: '',
     image: null,
-    tags: '', // Added tags back
 })
 
 const fileInput = ref(null)
 const previewUrl = ref(null)
 
 watch(
-    [() => props.quote, () => props.categories, () => props.show],
-    ([q, cats, show]) => {
-        if (show && q) {
-            form.quote = q.quote || ''
-            
-            // Set category ID
-            form.category = q.category?.toString() || ''
-            
-            form.caption = q.post?.caption || ''
-            form.hook = q.post?.hook || ''
-            form.image = q.post?.image_path || null
-            form.tags = '' // Default empty for now
-
-            // Set initial preview if quote has an image
-            previewUrl.value = q.image_url || null
+    [() => props.post, () => props.show],
+    ([p, show]) => {
+        if (show && p) {
+            form.quote = p.quote || ''
+            form.caption = p.caption || ''
+            form.image = null
+            const src = p.image_path || null
+            previewUrl.value = src ? (src.startsWith('http') ? src : `/storage/${src}`) : null
         }
     },
     { immediate: true }
 )
 
 const submit = () => {
-    const updateRoute = route().current().startsWith('admin.') 
-        ? route('admin.quotes.update', props.quote.id)
-        : route('quotes.update', props.quote.id)
+    const updateRoute = route('quotes.update', props.post.id)
 
     form.transform((data) => ({
         ...data,
@@ -71,11 +43,11 @@ const submit = () => {
     })).post(updateRoute, {
         preserveScroll: true,
         onSuccess: () => {
-            toast.success('Quote updated successfully!')
+            toast.success('Post updated successfully!')
             emit('close')
         },
         onError: () => {
-            toast.error('Failed to update quote. Please try again.')
+            toast.error('Failed to update post. Please try again.')
         },
     })
 }
@@ -83,7 +55,6 @@ const submit = () => {
 const handleImageUpload = (e) => {
     const file = e.target.files[0]
     if (file) {
-        // Revoke old blob URL if it exists
         if (previewUrl.value && previewUrl.value.startsWith('blob:')) {
             URL.revokeObjectURL(previewUrl.value)
         }
@@ -94,11 +65,12 @@ const handleImageUpload = (e) => {
 
 const removeImage = (e) => {
     e.stopPropagation()
-    if (form.image && previewUrl.value.startsWith('blob:')) {
+    if (previewUrl.value && previewUrl.value.startsWith('blob:')) {
         URL.revokeObjectURL(previewUrl.value)
     }
     form.image = null
-    previewUrl.value = props.quote?.image_url || null
+    const src = props.post?.image_path || null
+    previewUrl.value = src ? (src.startsWith('http') ? src : `/storage/${src}`) : null
     if (fileInput.value) {
         fileInput.value.value = ''
     }
@@ -122,8 +94,8 @@ onUnmounted(() => {
                 <!-- Header -->
                 <div class="flex flex-row items-center justify-between">
                     <div>
-                        <h2 class="text-2xl font-bold text-sidebar-foreground dark:text-white">Edit Quote</h2>
-                        <p class="text-sm text-sidebar-foreground/60">Make changes to the quote below.</p>
+                        <h2 class="text-2xl font-bold text-sidebar-foreground dark:text-white">Edit Post</h2>
+                        <p class="text-sm text-sidebar-foreground/60">Make changes to the post below.</p>
                     </div>
                     <button type="button" @click="$emit('close')" class="text-sidebar-foreground dark:text-white hover:opacity-70 transition-opacity">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x h-5 w-5">
@@ -135,14 +107,14 @@ onUnmounted(() => {
 
                 <!-- Form -->
                 <form @submit.prevent="submit" class="space-y-6">
-                    <!-- Quote Text -->
+                    <!-- Post Text -->
                     <div class="space-y-2">
-                        <label class="text-sm font-bold">Quote Text</label>
+                        <label class="text-sm font-bold">Post Text</label>
                         <div class="relative">
                             <textarea 
                                 v-model="form.quote" 
                                 class="flex w-full rounded-md border px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring bg-muted/20 border-border min-h-[120px] resize-none" 
-                                placeholder="Enter the quote text"
+                                placeholder="Enter the post text"
                             ></textarea>
                             <div class="text-[10px] text-muted-foreground/60 mt-1 text-right">{{ form.quote.length }}/500 characters</div>
                         </div>
@@ -155,45 +127,10 @@ onUnmounted(() => {
                             <textarea 
                                 v-model="form.caption" 
                                 class="flex w-full rounded-md border px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring bg-muted/20 border-border min-h-[150px] resize-none" 
-                                placeholder="Enter a description for this quote"
+                                placeholder="Enter a description for this post"
                             ></textarea>
                             <div class="text-[10px] text-muted-foreground/60 mt-1 text-right">{{ form.caption.length }}/300 characters</div>
                         </div>
-                    </div>
-
-                    <!-- Category -->
-                    <div class="space-y-2">
-                        <label class="text-sm font-bold">Category</label>
-                        <SelectRoot v-model="form.category">
-                            <SelectTrigger 
-                                class="flex h-11 w-full items-center justify-between rounded-md border px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring bg-muted/20 border-border text-foreground capitalize"
-                            >
-                                <SelectValue placeholder="Select a category" />
-                                <ChevronDown class="h-4 w-4 opacity-50" />
-                            </SelectTrigger>
-
-                            <SelectPortal>
-                                <SelectContent 
-                                    class="z-[100] w-[--radix-select-trigger-width] overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 bg-[#041C32] border-sidebar-border"
-                                    position="popper"
-                                    :side-offset="5"
-                                >
-                                    <SelectViewport class="p-1">
-                                        <SelectItem 
-                                            v-for="cat in categories" 
-                                            :key="cat.id" 
-                                            :value="cat.id.toString()"
-                                            class="relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-2 pr-9 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[state=checked]:bg-[#0F3D57] data-[state=checked]:text-white data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-muted/20 transition-colors capitalize"
-                                        >
-                                            <SelectItemText>{{ cat.name }}</SelectItemText>
-                                            <SelectItemIndicator class="absolute right-3 flex h-4 w-4 items-center justify-center">
-                                                <Check class="h-4 w-4 stroke-[3px]" />
-                                            </SelectItemIndicator>
-                                        </SelectItem>
-                                    </SelectViewport>
-                                </SelectContent>
-                            </SelectPortal>
-                        </SelectRoot>
                     </div>
 
                     <!-- Image Assets -->
@@ -221,7 +158,7 @@ onUnmounted(() => {
                             <!-- Placeholder -->
                             <template v-else>
                                 <ImageIcon class="text-muted-foreground h-8 w-8" />
-                                <span class="text-sm text-muted-foreground">Upload quote background image</span>
+                                <span class="text-sm text-muted-foreground">Upload post background image</span>
                             </template>
 
                             <input 
@@ -247,3 +184,4 @@ onUnmounted(() => {
         </div>
     </div>
 </template>
+

@@ -5,12 +5,13 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Post;
+use App\Models\Prompt;
 use App\Models\Quote;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
-class QuoteController extends Controller
+class PostController extends Controller
 {
     public function store(Request $request)
     {
@@ -22,20 +23,9 @@ class QuoteController extends Controller
             $imagePath = $file->storeAs('posts', $filename, 'public');
         }
 
-        $category = Category::firstOrCreate([
-            'name' => $request->category,
-            'slug' => Str::slug($request->category),
-        ]);
-
-        $quote = Quote::create([
-            'quote' => $request->quote,
-            'category' => $category->id,
-            'status' => 'unused',
-            'generated_at' => now(),
-        ]);
-
         Post::create([
-            'quote_id' => $quote->id,
+            'quote' => $request->quote,
+            'user_id' => 1,
             'caption' => $request->caption,
             'hook' => $request->hook,
             'image_path' => asset('storage/' . $imagePath), // IMPORTANT: full URL
@@ -46,11 +36,14 @@ class QuoteController extends Controller
         return response()->json(['success' => true]);
     }
 
-    public function getQuotes(Request $request)
+    public function getPrompt(Request $request)
     {
-        $quotes = Quote::latest()->limit(40)->pluck('quote');
+        $posts = Post::latest()->limit(40)->pluck('quote');
+        $prompt = Prompt::where('type', 'post')->where('user_id', 1)->first()->prompt;
 
-        return response()->json(["quotes" => $quotes]);
+        $prompt = str_replace('[quotes]', $posts->implode("\n"), $prompt);
+
+        return response()->json(["prompt" => $prompt]);
     }
 
     public function update_media_id_in_post(Request $request)
@@ -87,5 +80,3 @@ class QuoteController extends Controller
         return response()->json($payload);
     }
 }
-
-

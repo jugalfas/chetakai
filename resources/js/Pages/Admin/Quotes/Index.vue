@@ -81,7 +81,7 @@ const filterDescription = computed(() => {
     if (currentCategory.value) {
         return `in the ${currentCategory.value} category`;
     } else if (currentStatus.value !== 'all') {
-        return `${currentStatus.value} quotes`;
+        return `${currentStatus.value} posts`;
     } else {
         return '';
     }
@@ -96,20 +96,20 @@ const clearFilters = () => {
 </script>
 
 <template>
-    <Head title="Manage Quotes" />
+    <Head title="Manage Posts" />
 
     <AdminLayout>
         <template #header>
-            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Manage Quotes</h2>
+            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Manage Posts</h2>
         </template>
 
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
             <!-- Header Section -->
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                        <h1 class="text-3xl font-bold tracking-tight text-foreground">Quotes</h1>
+                        <h1 class="text-3xl font-bold tracking-tight text-foreground">Posts</h1>
                         <p class="text-muted-foreground mt-1">
-                            Manage and organize all quotes in the system.
+                            Manage and organize all posts in the system.
                         </p>
                     </div>
                 </div>
@@ -136,7 +136,7 @@ const clearFilters = () => {
                         <MagnifyingGlassIcon class="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" aria-hidden="true" />
                         <input v-model="search"
                             class="flex w-full rounded-md border px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm pl-9 bg-card border-border focus:ring-accent h-9 text-foreground"
-                            placeholder="Search quotes..." />
+                            placeholder="Search posts..." />
                     </div>
                     
                     <div class="relative">
@@ -194,9 +194,9 @@ const clearFilters = () => {
                         </svg>
                     </div>
                     <div class="space-y-1">
-                        <h3 class="text-xl font-bold text-foreground">No quotes found</h3>
+                        <h3 class="text-xl font-bold text-foreground">No posts found</h3>
                         <p class="text-muted-foreground max-w-xs mx-auto">
-                            There are currently no {{ filterDescription ? filterDescription : 'quotes' }}.
+                            There are currently no {{ filterDescription ? filterDescription : 'posts' }}.
                         </p>
                     </div>
                     <button @click="clearFilters"

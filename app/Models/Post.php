@@ -10,7 +10,8 @@ class Post extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'quote_id',
+        'quote',
+        'user_id',
         'caption',
         'image_path',
         'hook',
@@ -31,8 +32,8 @@ class Post extends Model
         'scheduled_at' => 'datetime',
     ];
 
-    public function quote()
+    public function user()
     {
-        return $this->belongsTo(Quote::class);
+        return $this->belongsTo(User::class);
     }
 }
