@@ -1,7 +1,6 @@
 <script setup>
 import AdminLayout from "@/Layouts/AdminLayout.vue";
 import DeleteConfirmationModal from "@/Components/DeleteConfirmationModal.vue";
-import EditQuoteModal from "@/Components/EditQuoteModal.vue";
 import { Head, router, Link } from "@inertiajs/vue3";
 import { ref, watch, computed } from "vue";
 import {
@@ -11,9 +10,10 @@ import {
     PencilIcon,
 } from "@heroicons/vue/24/outline";
 import { toast } from 'vue-sonner';
+import EditPostModal from "@/Components/EditPostModal.vue";
 
 const props = defineProps({
-    quotes: Object,
+    posts: Object,
     filters: Object,
     categories: Array,
     statusCounts: Object,
@@ -28,14 +28,14 @@ const showFiltersDropdown = ref(false);
 
 const showDeleteModal = ref(false);
 const showEditModal = ref(false);
-const quoteToDelete = ref(null);
-const quoteToEdit = ref(null);
+const postToDelete = ref(null);
+const postToEdit = ref(null);
 const processing = ref(false);
 
 // Server-side filtering
 const updateFilters = () => {
     router.get(
-        route("admin.quotes.index"),
+        route("admin.posts.index"),
         {
             search: search.value,
             status: currentStatus.value,
@@ -53,25 +53,25 @@ watch([search, currentStatus, currentCategory, currentSort], () => {
     updateFilters();
 });
 
-const openEdit = (quote) => {
-    quoteToEdit.value = quote;
+const openEdit = (post) => {
+    postToEdit.value = post;
     showEditModal.value = true;
 };
 
-const openDelete = (quote) => {
-    quoteToDelete.value = quote;
+const openDelete = (post) => {
+    postToDelete.value = post;
     showDeleteModal.value = true;
 };
 
-const deleteQuote = () => {
-    if (quoteToDelete.value) {
-        router.delete(route('admin.quotes.destroy', quoteToDelete.value.id), {
+const deletePost = () => {
+    if (postToDelete.value) {
+        router.delete(route('admin.posts.destroy', postToDelete.value.id), {
             onBefore: () => processing.value = true,
             onFinish: () => processing.value = false,
             onSuccess: () => {
                 showDeleteModal.value = false;
-                quoteToDelete.value = null;
-                toast.success('Quote deleted successfully');
+                postToDelete.value = null;
+                toast.success('Post deleted successfully');
             }
         });
     }
@@ -162,7 +162,7 @@ const clearFilters = () => {
                                 class="relative flex select-none items-center justify-between rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
                                 :class="{ 'bg-accent/50 text-accent-foreground': currentCategory == category.id }">
                                 {{ category.name }}
-                                <span class="text-xs font-semibold bg-muted px-2 py-0.5 rounded border border-border">{{ category.quotes_count }}</span>
+                                <span class="text-xs font-semibold bg-muted px-2 py-0.5 rounded border border-border">{{ category.posts_count }}</span>
                             </div>
                             
                             <div class="h-px bg-border my-1"></div>
@@ -180,10 +180,10 @@ const clearFilters = () => {
                 </div>
             </div>
 
-            <!-- Quotes Grid -->
+            <!-- Posts Grid -->
             <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 <!-- Empty State -->
-                <div v-if="quotes.data.length === 0"
+                <div v-if="posts.data.length === 0"
                     class="col-span-full py-20 flex flex-col items-center justify-center text-center space-y-4">
                     <div class="h-20 w-20 rounded-full bg-muted/30 flex items-center justify-center">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -205,50 +205,47 @@ const clearFilters = () => {
                     </button>
                 </div>
 
-                <!-- Quote Cards -->
-                <div v-for="quote in quotes.data" :key="quote.id"
+                <!-- Post Cards -->
+                <div v-for="post in posts.data" :key="post.id"
                     class="rounded-xl border border-border bg-card hover:border-accent/50 transition-all group overflow-hidden shadow-sm flex flex-col h-full min-h-[180px]">
                     <div class="p-6 flex-1">
                         <p class="text-base font-medium leading-relaxed italic text-foreground/90">
-                            "{{ quote.quote }}"
+                            "{{ post.quote }}"
                         </p>
                     </div>
                     <div class="px-6 pb-6 mt-auto">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-2">
-                                <span class="inline-flex items-center rounded-md border border-border bg-muted px-2 py-0.5 text-[10px] font-bold text-accent uppercase">
-                                    {{ quote.category_relation?.name || 'Uncategorized' }}
-                                </span>
                                 <span :class="[
                                     'inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium',
-                                    quote.post?.status === 'posted' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
-                                    quote.post?.status === 'scheduled' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' :
-                                    (quote.post?.status === 'draft' || !quote.post) ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' :
+                                    post.post?.status === 'posted' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
+                                    post.post?.status === 'scheduled' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' :
+                                    (post.post?.status === 'draft' || !post.post) ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' :
                                     'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
                                 ]">
-                                    {{ quote.post?.status === 'posted' ? 'Published' : (quote.post?.status || 'Draft') }}
+                                    {{ post.post?.status === 'posted' ? 'Published' : (post.post?.status || 'Draft') }}
                                 </span>
                             </div>
                             <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button @click="openEdit(quote)" class="p-1 text-muted-foreground hover:text-accent transition-colors">
+                                    <button @click="openEdit(post)" class="p-1 text-muted-foreground hover:text-accent transition-colors">
                                         <PencilIcon class="h-4 w-4" />
                                     </button>
-                                    <button @click="openDelete(quote)" class="p-1 text-muted-foreground hover:text-destructive transition-colors">
+                                    <button @click="openDelete(post)" class="p-1 text-muted-foreground hover:text-destructive transition-colors">
                                         <TrashIcon class="h-4 w-4" />
                                     </button>
                                 </div>
                         </div>
                         <div class="mt-2 text-[10px] text-muted-foreground">
-                            Created on {{ new Date(quote.created_at).toLocaleDateString() }}
+                            Created on {{ new Date(post.created_at).toLocaleDateString() }}
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Pagination -->
-            <div v-if="quotes.links.length > 3" class="mt-8 flex justify-center">
+            <div v-if="posts.links.length > 3" class="mt-8 flex justify-center">
                 <nav class="flex items-center gap-1">
-                    <template v-for="(link, k) in quotes.links" :key="k">
+                    <template v-for="(link, k) in posts.links" :key="k">
                         <div v-if="link.url === null" 
                             class="px-3 py-1 text-sm text-gray-500 border border-border rounded-md opacity-50" 
                             v-html="link.label" />
@@ -263,9 +260,9 @@ const clearFilters = () => {
         </div>
 
         <!-- Modals -->
-        <EditQuoteModal
+        <EditPostModal
             :show="showEditModal"
-            :quote="quoteToEdit"
+            :post="postToEdit"
             :categories="categories"
             @close="showEditModal = false"
         />
@@ -273,10 +270,10 @@ const clearFilters = () => {
         <DeleteConfirmationModal
             :show="showDeleteModal"
             :processing="processing"
-            title="Delete Quote"
-            message="Are you sure you want to delete this quote? This action cannot be undone."
+            title="Delete Post"
+            message="Are you sure you want to delete this post? This action cannot be undone."
             @close="showDeleteModal = false"
-            @confirm="deleteQuote"
+            @confirm="deletePost"
         />
     </AdminLayout>
 </template>

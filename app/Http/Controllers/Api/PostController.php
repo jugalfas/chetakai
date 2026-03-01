@@ -28,7 +28,7 @@ class PostController extends Controller
             'user_id' => 1,
             'caption' => $request->caption,
             'hook' => $request->hook,
-            'image_path' => asset('storage/' . $imagePath), // IMPORTANT: full URL
+            'image_path' => $imagePath ? asset('storage/' . $imagePath) : null, // IMPORTANT: full URL
             'scheduled_at' => now()->setTime(9, 0),
             'status' => 'scheduled'
         ]);

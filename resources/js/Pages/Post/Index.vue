@@ -25,7 +25,7 @@ import DropdownLink from "@/Components/DropdownLink.vue";
 import { MoreVertical } from "lucide-vue-next";
 
 const props = defineProps({
-    quotes: Object,
+    posts: Object,
     filters: Object,
     statusCounts: Object,
     canvaClientId: String,
@@ -40,7 +40,7 @@ const showFiltersDropdown = ref(false);
 
 const updatePosts = () => {
     router.get(
-        route("quotes.index"),
+        route("posts.index"),
         {
             search: search.value,
             status: currentStatus.value === "all" ? "" : currentStatus.value,
@@ -93,11 +93,11 @@ const processing = ref(false);
 
 // Initialize schedule data
 watch(
-    () => props.quotes.data,
-    (quotes) => {
-        quotes.forEach((quote) => {
-            if (!scheduleData.value[quote.id]) {
-                scheduleData.value[quote.id] = {
+    () => props.posts.data,
+    (posts) => {
+        posts.forEach((post) => {
+            if (!scheduleData.value[post.id]) {
+                scheduleData.value[post.id] = {
                     date: "",
                     time: "20:00",
                 };
@@ -122,7 +122,7 @@ const confirmPostDeletion = (post) => {
 const deletePost = () => {
     if (!postToDelete.value) return;
 
-    router.delete(route("quotes.destroy", postToDelete.value.id), {
+    router.delete(route("posts.destroy", postToDelete.value.id), {
         preserveScroll: true,
         onBefore: () => processing.value = true,
         onFinish: () => processing.value = false,
@@ -241,7 +241,7 @@ const schedulePost = (post) => {
 
             <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 <!-- If no post available -->
-                <div v-if="props.quotes.data.length === 0"
+                <div v-if="props.posts.data.length === 0"
                     class="col-span-full py-20 flex flex-col items-center justify-center text-center space-y-4">
                     <div class="h-20 w-20 rounded-full bg-muted/30 flex items-center justify-center">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -268,12 +268,12 @@ const schedulePost = (post) => {
                     </button>
                 </div>
 
-                <!-- If quotes are available -->
-                <div v-for="quote in props.quotes.data" :key="quote.id"
+                <!-- If posts are available -->
+                <div v-for="post in props.posts.data" :key="post.id"
                     class="rounded-xl border text-card-foreground border-border bg-card hover:border-accent/50 transition-all group shadow-sm">
                     <div class="p-6 flex flex-col h-full min-h-[180px]">
                         <div class="flex-1">
-                            <p class="text-base font-medium leading-relaxed italic text-foreground/90">"{{ quote.quote
+                            <p class="text-base font-medium leading-relaxed italic text-foreground/90">"{{ post.quote
                             }}"</p>
                         </div>
                         <div class="mt-6 flex items-center justify-between">
@@ -283,24 +283,24 @@ const schedulePost = (post) => {
                                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                         stroke-linejoin="round" :class="[
                                             'h-3 w-3',
-                                            (!quote.post || quote.post.status === 'draft') ? 'text-amber-500' :
-                                                quote.post.status === 'posted' ? 'text-green-500' :
-                                                    quote.post.status === 'scheduled' ? 'text-blue-500' :
+                                            (!post || post.status === 'draft') ? 'text-amber-500' :
+                                                post.status === 'posted' ? 'text-green-500' :
+                                                    post.status === 'scheduled' ? 'text-blue-500' :
                                                         'text-gray-500'
                                         ]" aria-hidden="true">
                                         <circle cx="12" cy="12" r="10"></circle>
-                                        <line v-if="!quote.post || quote.post.status === 'draft'" x1="12" x2="12" y1="8" y2="12"></line>
-                                        <line v-if="!quote.post || quote.post.status === 'draft'" x1="12" x2="12.01" y1="16" y2="16"></line>
-                                        <path v-if="quote.post?.status === 'posted'" d="m9 12 2 2 4-4"></path>
-                                        <rect v-if="quote.post?.status === 'scheduled'" width="18" height="18" x="3" y="4"
+                                        <line v-if="!post || post.status === 'draft'" x1="12" x2="12" y1="8" y2="12"></line>
+                                        <line v-if="!post || post.status === 'draft'" x1="12" x2="12.01" y1="16" y2="16"></line>
+                                        <path v-if="post?.status === 'posted'" d="m9 12 2 2 4-4"></path>
+                                        <rect v-if="post?.status === 'scheduled'" width="18" height="18" x="3" y="4"
                                             rx="2" ry="2"></rect>
-                                        <line v-if="quote.post?.status === 'scheduled'" x1="16" x2="16" y1="2" y2="6"></line>
-                                        <line v-if="quote.post?.status === 'scheduled'" x1="8" x2="8" y1="2" y2="6"></line>
-                                        <line v-if="quote.post?.status === 'scheduled'" x1="3" x2="21" y1="10" y2="10"></line>
+                                        <line v-if="post?.status === 'scheduled'" x1="16" x2="16" y1="2" y2="6"></line>
+                                        <line v-if="post?.status === 'scheduled'" x1="8" x2="8" y1="2" y2="6"></line>
+                                        <line v-if="post?.status === 'scheduled'" x1="3" x2="21" y1="10" y2="10"></line>
                                     </svg>
                                     <span class="capitalize">
-                                        {{ quote.post?.status === 'posted' ? 'Published' : (quote.post?.status || 'Draft') }}
-                                        {{ quote.post?.scheduled_at ? ' for ' + formatDate(quote.post.scheduled_at) : '' }}
+                                        {{ post.status === 'posted' ? 'Published' : (post.status || 'Draft') }}
+                                        {{ post.scheduled_at ? ' for ' + formatDate(post.scheduled_at) : '' }}
                                     </span>
                                 </div>
                             </div>
@@ -315,21 +315,21 @@ const schedulePost = (post) => {
                                     <template #content>
                                         <div class="p-1 flex flex-col min-w-[120px]">
                                             <button 
-                                                @click.stop="editPost(quote)"
+                                                @click.stop="editPost(post)"
                                                 class="flex w-full px-3 py-2 text-start text-sm leading-5 text-white hover:bg-white/10 transition duration-150 ease-in-out focus:outline-none rounded-md"
                                             >
                                                 Edit
                                             </button>
                                             <button 
-                                                @click.stop="schedulePost(quote)"
-                                                v-if="quote.post?.status !== 'posted'"
+                                                @click.stop="schedulePost(post)"
+                                                v-if="post.status !== 'posted'"
                                                 class="flex w-full px-3 py-2 text-start text-sm leading-5 text-white hover:bg-white/10 transition duration-150 ease-in-out focus:outline-none rounded-md"
                                             >
                                                 Schedule
                                             </button>
                                             <div class="h-px bg-sidebar-border my-1"></div>
                                             <button 
-                                                @click.stop="confirmPostDeletion(quote)"
+                                                @click.stop="confirmPostDeletion(post)"
                                                 class="flex w-full px-3 py-2 text-start text-sm leading-5 text-red-500 hover:bg-red-500/10 transition duration-150 ease-in-out focus:outline-none rounded-md font-medium"
                                             >
                                                 Delete
@@ -348,9 +348,9 @@ const schedulePost = (post) => {
                 <div class="flex flex-col sm:flex-row items-center gap-4 sm:gap-8">
                     <!-- Results Info -->
                     <div class="text-sm text-muted-foreground">
-                        Showing <span class="font-medium text-foreground">{{ props.quotes.from || 0 }}</span> 
-                        to <span class="font-medium text-foreground">{{ props.quotes.to || 0 }}</span> 
-                        of <span class="font-medium text-foreground">{{ props.quotes.total }}</span> results
+                        Showing <span class="font-medium text-foreground">{{ props.posts.from || 0 }}</span> 
+                        to <span class="font-medium text-foreground">{{ props.posts.to || 0 }}</span> 
+                        of <span class="font-medium text-foreground">{{ props.posts.total }}</span> results
                     </div>
 
                     <!-- Per Page Dropdown -->
@@ -381,9 +381,9 @@ const schedulePost = (post) => {
                 </div>
 
                 <!-- Pagination Links -->
-                <div v-if="props.quotes.links.length > 3" class="flex items-center">
+                <div v-if="props.posts.links.length > 3" class="flex items-center">
                     <nav class="flex items-center gap-1.5" aria-label="Pagination">
-                        <template v-for="(link, k) in props.quotes.links" :key="k">
+                        <template v-for="(link, k) in props.posts.links" :key="k">
                             <div v-if="link.url === null" 
                                 class="inline-flex items-center justify-center px-3 h-9 text-sm text-muted-foreground/50 border border-border/50 rounded-md cursor-not-allowed opacity-50 bg-muted/20" 
                                 v-html="link.label" />

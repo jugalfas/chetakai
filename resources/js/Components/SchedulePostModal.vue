@@ -1,20 +1,28 @@
 <script setup>
 import { router } from '@inertiajs/vue3'
-import { ref, watch, computed } from 'vue'
+import { ref, watch } from 'vue'
 import { X } from 'lucide-vue-next'
 import DateTimePicker from './DateTimePicker.vue'
 import { toast } from 'vue-sonner'
 
 const props = defineProps({
     show: Boolean,
-    quote: Object,
+    post: Object,
 })
 
 const emit = defineEmits(['close'])
 
-// Initialize with today's date and 8 PM
-const scheduledAt = ref(new Date())
-scheduledAt.value.setHours(20, 0, 0, 0)
+// Create a writable date ref (DateTimePicker uses v-model)
+const makeInitialDate = () => {
+    if (props.post?.scheduled_at) {
+        return new Date(props.post.scheduled_at)
+    }
+    const d = new Date()
+    d.setHours(9, 0, 0, 0)
+    return d
+}
+
+const scheduledAt = ref(makeInitialDate())
 
 const submit = () => {
     // Format to YYYY-MM-DD HH:mm:ss for backend
@@ -29,7 +37,7 @@ const submit = () => {
     const formattedScheduledAt = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
 
     router.post(
-        route('quotes.schedule', props.quote.id),
+        route('posts.schedule', props.post.id),
         { scheduled_at: formattedScheduledAt },
         {
             preserveScroll: true,
@@ -38,6 +46,7 @@ const submit = () => {
                 emit('close')
             },
             onError: (errors) => {
+                console.log(errors)
                 const errorMessage = errors.error || 'Failed to schedule post. Please try again.'
                 toast.error(errorMessage)
             },
@@ -47,10 +56,8 @@ const submit = () => {
 
 // Reset form when modal closes
 watch(() => props.show, (visible) => {
-    if (!visible) {
-        const defaultDate = new Date()
-        defaultDate.setHours(20, 0, 0, 0)
-        scheduledAt.value = defaultDate
+    if (visible) {
+        scheduledAt.value = makeInitialDate()
     }
 })
 </script>
@@ -74,7 +81,7 @@ watch(() => props.show, (visible) => {
             <!-- Header -->
             <div class="flex flex-col space-y-1.5 text-center sm:text-left">
                 <h2 class="text-xl font-bold leading-none tracking-tight">Schedule Post</h2>
-                <p class="text-sm text-white/60">Pick a date and time to automatically post this quote on Instagram.</p>
+                <p class="text-sm text-white/60">Pick a date and time to automatically post this post on Instagram.</p>
             </div>
 
             <form @submit.prevent="submit" class="space-y-6 mt-4">

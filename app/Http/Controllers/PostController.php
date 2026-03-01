@@ -74,7 +74,7 @@ class PostController extends Controller
             })->count();
 
         return Inertia::render('Post/Index', [
-            'quotes' => $posts,
+            'posts' => $posts,
             'filters' => $request->only(['search', 'status', 'sort', 'direction', 'per_page']),
             'categories' => [],
             'statusCounts' => $statusCounts,

@@ -66,10 +66,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::resource('posts', PostController::class)
         ->except(['show', 'create', 'edit'])
-        ->names('quotes')
+        ->names('posts')
         ->parameters(['posts' => 'post']);
-    Route::post('posts/{post}/schedule', [PostController::class, 'schedule'])->name('quotes.schedule');
-    Route::get('/render/quote/{id}', [PostController::class, 'render']);
+    Route::post('posts/{post}/schedule', [PostController::class, 'schedule'])->name('posts.schedule');
+    Route::get('/render/post/{id}', [PostController::class, 'render'])->name('posts.render');
 
     Route::resource('prompts', PromptController::class)->except(['show', 'create', 'edit', 'store']);
     Route::post('prompts/bulk', [PromptController::class, 'bulk'])->name('prompts.bulk');
