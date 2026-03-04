@@ -36,10 +36,10 @@ class PostController extends Controller
         return response()->json(['success' => true]);
     }
 
-    public function getPrompt(Request $request)
+    public function getPrompt(Request $request, $type)
     {
         $posts = Post::latest()->limit(40)->pluck('quote');
-        $prompt = Prompt::where('type', 'post')->where('user_id', 1)->first()->prompt;
+        $prompt = Prompt::where('type', $type)->where('user_id', 1)->first()->prompt;
 
         $prompt = str_replace('[quotes]', $posts->implode("\n"), $prompt);
 
@@ -55,6 +55,7 @@ class PostController extends Controller
         }
 
         $post->media_id = $request->media_id;
+        $post->status = 'posted';
         $post->save();
 
         return response()->json(['success' => true]);
