@@ -21,17 +21,32 @@ class PostController extends Controller
             $file = $request->file('image');
             $filename = 'quote_' . time() . '_' . Str::random(6) . '.png';
             $imagePath = $file->storeAs('posts', $filename, 'public');
+
+            Post::create([
+                'quote' => $request->quote,
+                'user_id' => 1,
+                'caption' => $request->caption,
+                'hook' => $request->hook,
+                'image_path' => $imagePath ? asset('storage/' . $imagePath) : null, // IMPORTANT: full URL
+                'scheduled_at' => now()->setTime(9, 0),
+                'status' => 'scheduled'
+            ]);
+        } else if ($request->hasFile('video')) {
+            $file = $request->file('video');
+            $filename = 'quote_' . time() . '_' . Str::random(6) . '.mp4';
+            $imagePath = $file->storeAs('posts', $filename, 'public');
+
+            Post::create([
+                'quote' => $request->quote,
+                'user_id' => 1,
+                'caption' => $request->caption,
+                'hook' => $request->hook,
+                'video_path' => $imagePath ? asset('storage/' . $imagePath) : null, // IMPORTANT: full URL
+                'scheduled_at' => null,
+                'status' => 'scheduled'
+            ]);
         }
 
-        Post::create([
-            'quote' => $request->quote,
-            'user_id' => 1,
-            'caption' => $request->caption,
-            'hook' => $request->hook,
-            'image_path' => $imagePath ? asset('storage/' . $imagePath) : null, // IMPORTANT: full URL
-            'scheduled_at' => now()->setTime(9, 0),
-            'status' => 'scheduled'
-        ]);
 
         return response()->json(['success' => true]);
     }
