@@ -8,7 +8,8 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-Route::post('/posts', [PostController::class, 'store']);
+Route::post('/posts', [PostController::class, 'store_post']);
+Route::post('/reels', [PostController::class, 'store_reel']);
 Route::get('/get_prompt/{type}', [PostController::class, 'getPrompt']);
 Route::get('/get_post_for_upload', [PostController::class, 'get_post_for_upload']);
 Route::post('/update_media_id_in_post', [PostController::class, 'update_media_id_in_post']);

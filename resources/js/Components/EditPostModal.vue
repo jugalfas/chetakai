@@ -2,7 +2,18 @@
 import { useForm } from '@inertiajs/vue3'
 import { watch, ref, onUnmounted } from 'vue'
 import { toast } from 'vue-sonner'
-import { X, Image as ImageIcon } from 'lucide-vue-next'
+import { X, Image as ImageIcon, ChevronDown, Check } from 'lucide-vue-next'
+import {
+    SelectRoot,
+    SelectTrigger,
+    SelectValue,
+    SelectContent,
+    SelectViewport,
+    SelectItem,
+    SelectPortal,
+    SelectItemText,
+    SelectItemIndicator,
+} from 'radix-vue'
 
 const props = defineProps({
     show: Boolean,
@@ -15,6 +26,7 @@ const form = useForm({
     quote: '',
     caption: '',
     image: null,
+    content_type: 'image',
 })
 
 const fileInput = ref(null)
@@ -27,6 +39,7 @@ watch(
             form.quote = p.quote || ''
             form.caption = p.caption || ''
             form.image = null
+            form.content_type = p.content_type || 'image'
             const src = p.image_path || null
             previewUrl.value = src ? (src.startsWith('http') ? src : `/storage/${src}`) : null
         }
@@ -81,6 +94,11 @@ onUnmounted(() => {
         URL.revokeObjectURL(previewUrl.value)
     }
 })
+
+const getMediaUrl = (path) => {
+    if (!path) return null
+    return path.startsWith('http') ? path : `/storage/${path}`
+}
 </script>
 
 <template>
@@ -133,8 +151,7 @@ onUnmounted(() => {
                         </div>
                     </div>
 
-                    <!-- Image Assets -->
-                    <div class="space-y-2">
+                    <div v-if="form.content_type === 'image'" class="space-y-2">
                         <label class="text-sm font-bold">Image Assets</label>
                         <div 
                             @click="fileInput.click()"
@@ -171,6 +188,71 @@ onUnmounted(() => {
                         </div>
                         <p v-if="form.image" class="text-[10px] text-accent mt-1">Selected: {{ form.image.name }}</p>
                     </div>
+
+                    <div v-else class="space-y-2">
+                        <label class="text-sm font-bold">Reel Video</label>
+                        <div class="rounded-lg border border-border bg-muted/5 p-4 flex items-center justify-between">
+                            <div class="text-sm text-muted-foreground">
+                                <div class="font-medium text-foreground">Download current reel</div>
+                                <div class="text-xs mt-1 break-all">
+                                    {{ props.post?.video_path ? getMediaUrl(props.post.video_path) : 'No reel video available' }}
+                                </div>
+                            </div>
+                            <a
+                                v-if="props.post?.video_path"
+                                :href="getMediaUrl(props.post.video_path)"
+                                download
+                                class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-transparent min-h-9 px-4 py-2 bg-accent text-white hover:opacity-90"
+                            >
+                                Download
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Content Type -->
+                    <div class="space-y-2">
+                        <label class="text-sm font-bold">Content Type</label>
+                        <SelectRoot v-model="form.content_type">
+                            <SelectTrigger
+                                class="flex h-11 w-full items-center justify-between rounded-md border px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring bg-muted/20 border-border text-foreground capitalize"
+                            >
+                                <SelectValue placeholder="Select content type" />
+                                <ChevronDown class="h-4 w-4 opacity-50" />
+                            </SelectTrigger>
+
+                            <SelectPortal>
+                                <SelectContent
+                                    class="z-[100] w-[--radix-select-trigger-width] overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 bg-[#041C32] border-sidebar-border"
+                                    position="popper"
+                                    :side-offset="5"
+                                >
+                                    <SelectViewport class="p-1">
+                                        <SelectItem
+                                            value="image"
+                                            class="relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-2 pr-9 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[state=checked]:bg-[#0F3D57] data-[state=checked]:text-white data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-muted/20 transition-colors capitalize"
+                                        >
+                                            <SelectItemText>Image</SelectItemText>
+                                            <SelectItemIndicator class="absolute right-3 flex h-4 w-4 items-center justify-center">
+                                                <Check class="h-4 w-4 stroke-[3px]" />
+                                            </SelectItemIndicator>
+                                        </SelectItem>
+                                        <SelectItem
+                                            value="reel"
+                                            class="relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-2 pr-9 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[state=checked]:bg-[#0F3D57] data-[state=checked]:text-white data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-muted/20 transition-colors capitalize"
+                                        >
+                                            <SelectItemText>Reel</SelectItemText>
+                                            <SelectItemIndicator class="absolute right-3 flex h-4 w-4 items-center justify-center">
+                                                <Check class="h-4 w-4 stroke-[3px]" />
+                                            </SelectItemIndicator>
+                                        </SelectItem>
+                                    </SelectViewport>
+                                </SelectContent>
+                            </SelectPortal>
+                        </SelectRoot>
+                        <div class="text-[10px] text-muted-foreground/60 mt-1">
+                            Choose whether this is a standard post or a reel.
+                        </div>
+                    </div>
                 </form>
             </div>
 
@@ -184,4 +266,3 @@ onUnmounted(() => {
         </div>
     </div>
 </template>
-

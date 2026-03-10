@@ -9,11 +9,12 @@ use App\Models\Prompt;
 use App\Models\Quote;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class PostController extends Controller
 {
-    public function store(Request $request)
+    public function store_post(Request $request)
     {
         $imagePath = null;
 
@@ -32,21 +33,23 @@ class PostController extends Controller
                 'status' => 'scheduled'
             ]);
         } else if ($request->hasFile('video')) {
-            $file = $request->file('video');
-            $filename = 'quote_' . time() . '_' . Str::random(6) . '.mp4';
-            $imagePath = $file->storeAs('posts', $filename, 'public');
+            $file     = $request->file('video');
+            $filename = 'reel_' . time() . '_' . Str::random(6) . '.' . $file->getClientOriginalExtension();
+            $path     = $file->storeAs('posts', $filename, 'public');
 
+            // Build DB record
             Post::create([
-                'quote' => $request->quote,
-                'user_id' => 1,
-                'caption' => $request->caption,
-                'hook' => $request->hook,
-                'video_path' => $imagePath ? asset('storage/' . $imagePath) : null, // IMPORTANT: full URL
+                'quote'        => $request->quote,
+                'caption'      => $request->caption,
+                'user_id'      => 1,                          // or auth()->id()
+                'content_type' => 'reel',
+                'video_path'   => Storage::disk('public')->url($path),
+                'post_status'  => 'pending',                  // default based on your table
+                'upload_status'=> 'waiting',                  // default based on your table
                 'scheduled_at' => null,
-                'status' => 'scheduled'
+                'created_at'   => now(),
             ]);
         }
-
 
         return response()->json(['success' => true]);
     }

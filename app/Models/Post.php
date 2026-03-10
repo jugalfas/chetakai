@@ -14,6 +14,7 @@ class Post extends Model
         'user_id',
         'caption',
         'image_path',
+        'video_path',
         'hook',
         'type',
         'scheduled_at',
