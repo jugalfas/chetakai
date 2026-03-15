@@ -32,7 +32,7 @@ const logoutRoute = computed(() => {
 const navigation = computed(() => {
     if (props.isAdmin) {
         return [
-            {   
+            {
                 name: 'Dashboard',
                 href: route('admin.dashboard'),
                 icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="h-4 w-4"><rect width="7" height="9" x="3" y="3" rx="1"></rect><rect width="7" height="5" x="14" y="3" rx="1"></rect><rect width="7" height="9" x="14" y="12" rx="1"></rect><rect width="7" height="5" x="3" y="16" rx="1"></rect></svg>',
@@ -45,12 +45,19 @@ const navigation = computed(() => {
                 current: route().current('admin.users.*'),
             },
             {
+                name: 'Content Studio',
+                href: route('admin.content-studio.index'),
+                icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="h-4 w-4"><path d="M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"></path><path d="M9 9h6v6H9z"></path></svg>',
+                current: route().current('admin.content-studio.*'),
+            },
+            {
                 name: 'Messages',
                 href: route('admin.contacts.index'),
                 icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="h-4 w-4"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>',
                 current: route().current('admin.contacts.*'),
                 count: page.props.auth.unreadMessagesCount,
             },
+
         ];
     }
 
@@ -74,11 +81,32 @@ const navigation = computed(() => {
             current: route().current('posts.index'),
         },
         {
+            name: 'Content Studio',
+            href: route('studio.index'),
+            icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="h-4 w-4"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect></svg>',
+            current: route().current('studio.index'),
+        },
+        {
             name: 'Prompts',
             href: route('prompts.index'),
             icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="h-4 w-4"><circle cx="12" cy="12" r="10"></circle><path d="M8 12h8"></path><path d="M12 8v8"></path></svg>',
             current: route().current('prompts.*'),
         }
+    ];
+});
+
+const promptNavigation = computed(() => {
+    if (!props.isAdmin) return [];
+    const icon = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="h-4 w-4"><rect x="3" y="4" width="18" height="16" rx="2" ry="2"></rect><path d="M3 10h18"></path></svg>';
+    return [
+        { name: 'Prompt Templates', href: route('admin.prompt-templates.index'), icon, current: route().current('admin.prompt-templates.*') },
+        { name: 'Templates', href: route('admin.templates.index'), icon, current: route().current('admin.templates.*') },
+        { name: 'Content Types', href: route('admin.prompts.content_types'), icon, current: route().current('admin.prompts.content_types') },
+        { name: 'Categories', href: route('admin.prompts.categories'), icon, current: route().current('admin.prompts.categories') },
+        { name: 'Content Goals', href: route('admin.prompts.content_goals'), icon, current: route().current('admin.prompts.content_goals') },
+        { name: 'Tones', href: route('admin.prompts.tones'), icon, current: route().current('admin.prompts.tones') },
+        { name: 'Audiences', href: route('admin.prompts.audiences'), icon, current: route().current('admin.prompts.audiences') },
+        { name: 'Styles', href: route('admin.prompts.styles'), icon, current: route().current('admin.prompts.styles') },
     ];
 });
 </script>
@@ -126,6 +154,23 @@ const navigation = computed(() => {
                             <span v-if="!isCollapsed && item.count > 0" class="ml-auto inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
                                 {{ item.count }}
                             </span>
+                        </Link>
+                    </a>
+                </div>
+                <div v-if="isAdmin" role="list" class="space-y-1">
+                    <div class="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest text-sidebar-foreground/40">Prompt Management</div>
+                    <a v-for="item in promptNavigation" :key="item.name">
+                        <Link :href="item.href" :class="[
+                            'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer relative',
+                            item.current
+                                ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                                : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground',
+                            isCollapsed ? 'justify-center px-2' : ''
+                        ]">
+                            <div class="relative">
+                                <span v-html="item.icon"></span>
+                            </div>
+                            <span v-if="!isCollapsed">{{ item.name }}</span>
                         </Link>
                     </a>
                 </div>
@@ -209,6 +254,25 @@ const navigation = computed(() => {
                                 </Link>
                             </li>
                         </ul>
+                    </li>
+                </ul>
+                <div v-if="isAdmin" class="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">Prompt Management</div>
+                <ul v-if="isAdmin" role="list" class="-mx-2 space-y-1">
+                    <li v-for="item in promptNavigation" :key="item.name">
+                        <Link :href="item.href" @click="emit('close-mobile')" :class="[
+                            'group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold transition-colors duration-200',
+                            item.current
+                                ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                                : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground',
+                        ]">
+                            <span :class="[
+                                'h-6 w-6 shrink-0',
+                                item.current
+                                    ? 'text-white'
+                                    : 'text-gray-400 group-hover:text-white'
+                            ]" v-html="item.icon"></span>
+                            <span>{{ item.name }}</span>
+                        </Link>
                     </li>
                 </ul>
                 <div class="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">Account</div>

@@ -3,8 +3,14 @@
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\PromptManagementController;
+use App\Http\Controllers\Admin\ContentStudioController;
+use App\Http\Controllers\Admin\PromptTemplateController;
+use App\Http\Controllers\Admin\TemplateController;
+use App\Http\Controllers\Admin\PromptTestController;
 use App\Http\Controllers\Admin\ContactController;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
 Route::middleware('guest:admin')->group(function () {
     Route::redirect('/', '/admin/login');
@@ -15,6 +21,8 @@ Route::middleware('guest:admin')->group(function () {
 Route::middleware('auth:admin')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
+
+    Route::get('/content-types/{contentType}/attributes', [TemplateController::class, 'contentTypeAttributes'])->name('content_types.attributes');
 
     Route::prefix('users')->name('users.')->group(function () {
         Route::get('/', [UserController::class, 'index'])->name('index');
@@ -29,5 +37,43 @@ Route::middleware('auth:admin')->group(function () {
         Route::patch('/{contact}/read', [ContactController::class, 'markAsRead'])->name('mark-as-read');
         Route::post('/{contact}/reply', [ContactController::class, 'reply'])->name('reply');
         Route::delete('/{contact}', [ContactController::class, 'destroy'])->name('destroy');
+    });
+
+    Route::prefix('prompt-templates')->name('prompt-templates.')->group(function () {
+        Route::get('/', [PromptTemplateController::class, 'index'])->name('index');
+        Route::get('/create', [PromptTemplateController::class, 'create'])->name('create');
+        Route::post('/', [PromptTemplateController::class, 'store'])->name('store');
+        Route::get('/{promptTemplate}/edit', [PromptTemplateController::class, 'edit'])->name('edit');
+        Route::put('/{promptTemplate}', [PromptTemplateController::class, 'update'])->name('update');
+        Route::delete('/{promptTemplate}', [PromptTemplateController::class, 'destroy'])->name('destroy');
+        Route::patch('/{promptTemplate}/toggle-status', [PromptTemplateController::class, 'toggleStatus'])->name('toggle-status');
+    });
+
+    Route::post('/templates/{template}/generate-prompt', [PromptTestController::class, 'generate'])
+        ->name('templates.generate-prompt');
+
+    Route::get('/content-studio', [ContentStudioController::class, 'index'])->name('content-studio.index');
+    Route::post('/content-studio/preview', [ContentStudioController::class, 'preview'])->name('content-studio.preview');
+    Route::post('/content-studio/generate', [ContentStudioController::class, 'generate'])->name('content-studio.generate');
+
+    Route::prefix('prompts')->group(function () {
+        Route::get('/templates', [TemplateController::class, 'index'])->name('templates.index');
+        Route::get('/templates/create', [TemplateController::class, 'create'])->name('templates.create');
+        Route::post('/templates', [TemplateController::class, 'store'])->name('templates.store');
+        Route::get('/templates/{template}/edit', [TemplateController::class, 'edit'])->name('templates.edit');
+        Route::put('/templates/{template}', [TemplateController::class, 'update'])->name('templates.update');
+        Route::delete('/templates/{template}', [TemplateController::class, 'destroy'])->name('templates.destroy');
+    });
+
+    Route::prefix('prompts')->name('prompts.')->group(function () {
+        Route::get('/content-types', [PromptManagementController::class, 'contentTypes'])->name('content_types');
+        Route::get('/categories', [PromptManagementController::class, 'categories'])->name('categories');
+        Route::get('/goals', [PromptManagementController::class, 'contentGoals'])->name('content_goals');
+        Route::get('/tones', [PromptManagementController::class, 'tones'])->name('tones');
+        Route::get('/audiences', [PromptManagementController::class, 'audiences'])->name('audiences');
+        Route::get('/styles', [PromptManagementController::class, 'styles'])->name('styles');
+
+        Route::post('/store', [PromptManagementController::class, 'store'])->name('store');
+        Route::delete('/delete', [PromptManagementController::class, 'destroy'])->name('destroy');
     });
 });

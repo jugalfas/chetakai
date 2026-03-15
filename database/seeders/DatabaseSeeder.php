@@ -33,6 +33,14 @@ class DatabaseSeeder extends Seeder
         $this->call([
             AdminSeeder::class,
             AddDefaultPromptSeeder::class,
+            PlatformSeeder::class,
+            ContentTypeSeeder::class,
+            CategorySeeder::class,
+            ContentGoalSeeder::class,
+            ToneSeeder::class,
+            AudienceSeeder::class,
+            StyleSeeder::class,
+            PromptTemplateSeeder::class,
         ]);
     }
 }

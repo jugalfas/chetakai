@@ -7,6 +7,11 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\PromptController;
+use App\Http\Controllers\PromptGenerationController;
+use App\Http\Controllers\Studio\ContentStudioController;
+use App\Http\Controllers\Studio\GenerationController;
+use App\Http\Controllers\Studio\TemplateController;
+use App\Http\Controllers\Studio\CategoryController;
 use App\Models\Post;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -73,6 +78,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::resource('prompts', PromptController::class)->except(['show', 'create', 'edit', 'store']);
     Route::post('prompts/bulk', [PromptController::class, 'bulk'])->name('prompts.bulk');
+
+    Route::get('/studio', [ContentStudioController::class, 'index'])->name('studio.index');
+    Route::post('/studio/generate', [GenerationController::class, 'generate'])->name('studio.generate');
+    Route::post('/studio/templates', [TemplateController::class, 'store'])->name('studio.templates.store');
+    Route::put('/studio/templates/{template}', [TemplateController::class, 'update'])->name('studio.templates.update');
+    Route::delete('/studio/templates/{template}', [TemplateController::class, 'destroy'])->name('studio.templates.destroy');
+    Route::post('/studio/templates/{template}/duplicate', [TemplateController::class, 'duplicate'])->name('studio.templates.duplicate');
+    Route::post('/templates/{template}/generate-prompt', [PromptGenerationController::class, 'generateFromTemplate'])->name('templates.generate-prompt');
+    Route::get('/studio/categories', [CategoryController::class, 'index'])->name('studio.categories.index');
+    Route::post('/studio/categories', [CategoryController::class, 'store'])->name('studio.categories.store');
+    Route::delete('/studio/categories/{category}', [CategoryController::class, 'destroy'])->name('studio.categories.destroy');
 });
 
 Route::get('/dashboard', function () {
