@@ -11,13 +11,12 @@ class StyleSeeder extends Seeder
     public function run(): void
     {
         $styles = [
-            'Minimal',
-            'Advice Style',
-            'Journal Style',
-            'Story Style',
+            'Simple',
+            'Storytelling',
+            'Direct',
             'Educational',
-            'Motivational',
-            'Instagram Viral',
+            'Persuasive',
+            'Minimal',
         ];
 
         foreach ($styles as $style) {

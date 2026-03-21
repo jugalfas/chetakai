@@ -27,13 +27,10 @@ class User extends Authenticatable
         'last_name',
         'email',
         'password',
-        'instagram_username',
-        'instagram_account_type',
-        'instagram_connected',
-        'instagram_access_token',
-        'auto_post_schedule_enabled',
-        'post_notifications_enabled',
-        'instagram_business_id',
+        'timezone',
+        'avatar_path',
+        'status',
+        'onboarding_completed_at',
     ];
 
     /**
@@ -56,14 +53,41 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
-            'instagram_connected' => 'boolean',
-            'auto_post_schedule_enabled' => 'boolean',
-            'post_notifications_enabled' => 'boolean',
         ];
     }
 
-    public function conversations()
+    public function conversations(): HasMany
     {
         return $this->hasMany(Conversation::class);
+    }
+
+    public function socialAccounts(): HasMany
+    {
+        return $this->hasMany(SocialAccount::class);
+    }
+
+    public function templates(): HasMany
+    {
+        return $this->hasMany(Template::class);
+    }
+
+    public function generatedContents(): HasMany
+    {
+        return $this->hasMany(GeneratedContent::class);
+    }
+
+    public function brandKits(): HasMany
+    {
+        return $this->hasMany(BrandKit::class);
+    }
+
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(Subscription::class);
+    }
+
+    public function usageLogs(): HasMany
+    {
+        return $this->hasMany(UsageLog::class);
     }
 }

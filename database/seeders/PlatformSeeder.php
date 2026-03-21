@@ -11,8 +11,11 @@ class PlatformSeeder extends Seeder
     {
         $platforms = [
             ['name' => 'Instagram', 'slug' => 'instagram'],
+            ['name' => 'Facebook', 'slug' => 'facebook'],
             ['name' => 'LinkedIn', 'slug' => 'linkedin'],
-            ['name' => 'Twitter', 'slug' => 'twitter'],
+            ['name' => 'X', 'slug' => 'x'],
+            ['name' => 'YouTube', 'slug' => 'youtube'],
+            ['name' => 'TikTok', 'slug' => 'tiktok'],
         ];
 
         foreach ($platforms as $platform) {

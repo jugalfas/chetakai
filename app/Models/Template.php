@@ -20,13 +20,23 @@ class Template extends Model
         'tone_id',
         'audience_id',
         'style_id',
-        'template_name',
+        'brand_kit_id',
+        'name',
+        'description',
+        'posting_mode',
+        'posts_per_day',
+        'preferred_time',
+        'timezone',
         'length',
-        'bulk_generate',
+        'custom_instructions',
+        'generation_settings',
+        'is_active',
     ];
 
     protected $casts = [
-        'bulk_generate' => 'integer',
+        'posts_per_day' => 'integer',
+        'is_active' => 'boolean',
+        'generation_settings' => 'array',
     ];
 
     public function user(): BelongsTo
@@ -34,43 +44,58 @@ class Template extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function platform(): BelongsTo
-    {
-        return $this->belongsTo(Platform::class);
-    }
-
     public function contentType(): BelongsTo
     {
         return $this->belongsTo(ContentType::class, 'content_type_id');
     }
 
+    public function platform(): BelongsTo
+    {
+        return $this->belongsTo(Platform::class)->withDefault();
+    }
+
     public function category(): BelongsTo
     {
-        return $this->belongsTo(Category::class);
+        return $this->belongsTo(Category::class)->withDefault();
     }
 
     public function contentGoal(): BelongsTo
     {
-        return $this->belongsTo(ContentGoal::class, 'goal_id');
+        return $this->belongsTo(ContentGoal::class, 'goal_id')->withDefault();
     }
 
     public function tone(): BelongsTo
     {
-        return $this->belongsTo(Tone::class);
+        return $this->belongsTo(Tone::class)->withDefault();
     }
 
     public function audience(): BelongsTo
     {
-        return $this->belongsTo(Audience::class);
+        return $this->belongsTo(Audience::class)->withDefault();
     }
 
     public function style(): BelongsTo
     {
-        return $this->belongsTo(Style::class);
+        return $this->belongsTo(Style::class)->withDefault();
+    }
+
+    public function brandKit(): BelongsTo
+    {
+        return $this->belongsTo(BrandKit::class, 'brand_kit_id')->withDefault();
     }
 
     public function templateAttributes(): HasMany
     {
         return $this->hasMany(TemplateAttribute::class);
+    }
+    
+    public function automationRules(): HasMany
+    {
+        return $this->hasMany(AutomationRule::class);
+    }
+
+    public function generatedContents(): HasMany
+    {
+        return $this->hasMany(GeneratedContent::class);
     }
 }

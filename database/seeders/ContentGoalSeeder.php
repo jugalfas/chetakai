@@ -11,13 +11,12 @@ class ContentGoalSeeder extends Seeder
     public function run(): void
     {
         $goals = [
-            'Inspire',
-            'Educate',
-            'Promote',
-            'Entertain',
-            'Storytelling',
-            'Drive Traffic',
-            'Increase Engagement',
+            'Growth',
+            'Engagement',
+            'Education',
+            'Inspiration',
+            'Promotion',
+            'Community',
         ];
 
         foreach ($goals as $goal) {

@@ -12,12 +12,11 @@ class ToneSeeder extends Seeder
     {
         $tones = [
             'Professional',
-            'Casual',
+            'Friendly',
+            'Witty',
+            'Bold',
             'Emotional',
-            'Motivational',
-            'Funny',
-            'Inspirational',
-            'Educational',
+            'Genz',
         ];
 
         foreach ($tones as $tone) {

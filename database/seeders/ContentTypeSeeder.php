@@ -11,15 +11,13 @@ class ContentTypeSeeder extends Seeder
     public function run(): void
     {
         $types = [
-            'Text Post',
+            'Single Image Post',
             'Quote Post',
             'Carousel Post',
             'Reel Script',
-            'AI Image',
-            'Meme',
+            'Reel Post',
             'Story Post',
-            'Caption + Hashtags',
-            'Content Ideas',
+            'Caption Only',
         ];
 
         foreach ($types as $type) {
