@@ -37,6 +37,10 @@ return Application::configure(dirname(__DIR__))
             }
             return route('login');
         });
+
+        $middleware->alias([
+            'otp.verified' => \App\Http\Middleware\EnsureOtpVerified::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

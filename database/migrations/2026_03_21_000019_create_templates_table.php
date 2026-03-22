@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('platform_id')->nullable()->constrained();
             $table->foreignId('content_type_id')->constrained();
             $table->foreignId('category_id')->nullable()->constrained();
-            $table->foreignId('goal_id')->nullable()->constrained();
+            $table->foreignId('content_goal_id')->nullable()->constrained();
             $table->foreignId('tone_id')->nullable()->constrained();
             $table->foreignId('audience_id')->nullable()->constrained();
             $table->foreignId('style_id')->nullable()->constrained();
@@ -32,10 +32,7 @@ return new class extends Migration
             $table->text('custom_instructions')->nullable();
             $table->json('generation_settings')->nullable();
             $table->boolean('is_active')->default(true);
-            $table->timestamp('created_at')->useCurrent();
-            $table->timestamp('updated_at')->useCurrent()->useCurrentOnUpdate();
             $table->softDeletes();
-            $table->timestamps();
         });
     }
 

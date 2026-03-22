@@ -12,8 +12,9 @@ use App\Http\Controllers\Studio\ContentStudioController;
 use App\Http\Controllers\Studio\GenerationController;
 use App\Http\Controllers\Studio\TemplateController;
 use App\Http\Controllers\Studio\CategoryController;
-use App\Models\Post;
 use Illuminate\Foundation\Application;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -34,7 +35,7 @@ Route::get('/privacy', function () {
 Route::get('/terms-of-service', function () {
     return Inertia::render('TermsOfService', [
         'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register')
+        'canRegister' => Route::has('register'),
     ]);
 })->name('terms-of-service');
 
@@ -53,11 +54,18 @@ Route::get('/mail-preview', function () {
         'email' => 'jugalfaswala@gmail.com',
         'message' => "Hello!\n\nThis is a preview of the new contact form email template. It supports multiple lines and uses the custom layout we just created.\n\nBest regards,\nChetak Team"
     ];
-
+    // Mail::to('jugalfaswala@gmail.com')->send(new App\Mail\ContactFormSubmitted($data));
     return new App\Mail\ContactFormSubmitted($data);
 });
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::get('/mail-preview2', function () {
+    $user = Auth::user();
+    $otp = rand(100000, 999999);
+
+    return new App\Mail\OtpVerificationMail($user, $otp);
+});
+
+Route::middleware(['auth', 'otp.verified'])->group(function () {
     Route::get('/chat', [ChatController::class, 'index'])->name('chat.index');
     Route::post('/chat', [ChatController::class, 'store'])->name('chat.store');
     Route::get('/chat/{id}', [ChatController::class, 'show'])->name('chat.show');
@@ -69,12 +77,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/messages/{id}/regenerate', [ChatController::class, 'regenerateMessage'])->name('messages.regenerate');
     Route::delete('/messages/{id}', [ChatController::class, 'destroyMessage'])->name('messages.destroy');
 
-    Route::resource('posts', PostController::class)
-        ->except(['show', 'create', 'edit'])
-        ->names('posts')
-        ->parameters(['posts' => 'post']);
-    Route::post('posts/{post}/schedule', [PostController::class, 'schedule'])->name('posts.schedule');
-    Route::get('/render/post/{id}', [PostController::class, 'render'])->name('posts.render');
+   //  Route::resource('posts', PostController::class)
+   //      ->except(['show', 'create', 'edit'])
+   //      ->names('posts')
+   //      ->parameters(['posts' => 'post']);
+   //  Route::post('posts/{post}/schedule', [PostController::class, 'schedule'])->name('posts.schedule');
+   //  Route::get('/render/post/{id}', [PostController::class, 'render'])->name('posts.render');
 
     Route::resource('prompts', PromptController::class)->except(['show', 'create', 'edit', 'store']);
     Route::post('prompts/bulk', [PromptController::class, 'bulk'])->name('prompts.bulk');
@@ -92,15 +100,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 Route::get('/dashboard', function () {
-    $posts = Post::count();
-    $scheduledPosts = Post::where('status', 'scheduled')->count();
-    $postedPosts = Post::where('status', 'posted')->count();
-    return Inertia::render('Dashboard', [
-        'posts' => $posts,
-        'scheduledPosts' => $scheduledPosts,
-        'postedPosts' => $postedPosts,
-    ]);
-})->middleware(['auth', 'verified'])->name('dashboard');
+    return Inertia::render('Dashboard');
+})->middleware(['auth', 'otp.verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

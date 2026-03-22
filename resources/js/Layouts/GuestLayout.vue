@@ -4,7 +4,7 @@ import { Link } from '@inertiajs/vue3';
 import { SunIcon, MoonIcon } from '@heroicons/vue/24/outline';
 import { ref } from 'vue';
 
-const isDarkMode = ref(false);
+const isDarkMode = ref(true);
 
 const toggleDarkMode = () => {
     isDarkMode.value = !isDarkMode.value;

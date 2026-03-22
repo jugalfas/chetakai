@@ -16,31 +16,13 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        User::factory()->create([
-            'first_name' => 'Jugal',
-            'last_name' => 'Faswala',
-            'email' => 'jugal@chetak.ai',
-            'email_verified_at' => now(),
-            'password' => Hash::make('Jugal@7177'),
-            'instagram_username' => 'chetak_quotes',
-            'instagram_account_type' => 'Business Account',
-            'instagram_connected' => false,
-            'instagram_access_token' => NULL,
-            'auto_post_schedule_enabled' => true,
-            'post_notifications_enabled' => true,
-        ]);
-
         $this->call([
             AdminSeeder::class,
-            AddDefaultPromptSeeder::class,
             PlatformSeeder::class,
             ContentTypeSeeder::class,
-            CategorySeeder::class,
             ContentGoalSeeder::class,
             ToneSeeder::class,
-            AudienceSeeder::class,
             StyleSeeder::class,
-            PromptTemplateSeeder::class,
         ]);
     }
 }

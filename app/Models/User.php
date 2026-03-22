@@ -31,6 +31,8 @@ class User extends Authenticatable
         'avatar_path',
         'status',
         'onboarding_completed_at',
+        'otp',
+        'otp_expires_at',
     ];
 
     /**
