@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\OtpVerificationMail;
+use App\Mail\WelcomeMail;
 use Carbon\Carbon;
 
 use Inertia\Inertia;
@@ -33,6 +34,7 @@ class OtpVerificationController extends Controller
             $user->otp_expires_at = null;
             $user->save();
 
+            Mail::to($user->email)->send(new WelcomeMail($user->first_name));
             return redirect()->intended(route('dashboard', absolute: false));
         }
 

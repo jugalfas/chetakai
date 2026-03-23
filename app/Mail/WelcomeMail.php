@@ -9,20 +9,18 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class OtpVerificationMail extends Mailable
+class WelcomeMail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public $user;
-    public $otp;
+    public $name;
 
     /**
      * Create a new message instance.
      */
-    public function __construct($user, $otp)
+    public function __construct($name)
     {
-        $this->user = $user;
-        $this->otp = $otp;
+        $this->name = $name;
     }
 
     /**
@@ -31,7 +29,7 @@ class OtpVerificationMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'OTP Verification for ' . config('app.name'),
+            subject: 'Welcome to ' . config('app.name'),
         );
     }
 
@@ -41,10 +39,9 @@ class OtpVerificationMail extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'emails.otp-verification',
+            view: 'emails.welcome',
             with: [
-                'otp' => $this->otp,
-                'user' => $this->user,
+                'name' => $this->name,
             ],
         );
     }

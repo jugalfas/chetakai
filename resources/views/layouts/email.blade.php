@@ -22,7 +22,7 @@
                 <div style="background-color: #041C32; padding-top: 32px; padding-bottom: 32px; padding-left: 32px; padding-right: 32px; border-top: 1px solid rgba(255, 255, 255, 0.05);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
                         <div style="color: #94a3b8; font-size: 14px;">
-                            <p>Thanks for choosing Chetak,</p>
+                            <p style="margin: 0;">Thanks for choosing Chetak,</p>
                             <p style="color: #ffffff; font-weight: 700; margin-top: 4px;">The Chetak Team</p>
                         </div>
                         <!-- <div style="display: flex; gap: 12px;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="height: 20px; width: 20px; color: #94a3b8;" aria-hidden="true">
@@ -35,7 +35,11 @@
                     </div>
                     <div style="text-align: center; font-size: 12px; color: #94a3b8; margin-top: 8px; text-transform: uppercase; letter-spacing: 0.05em;">
                         <p>© 2026 CHETAK AUTOMATION INC.</p>
-                        <div style="display: flex; justify-content: center; gap: 16px;"><a href="#" style="color: #cbd5e1;">Privacy</a><a href="#" style="color: #cbd5e1;">Terms</a><a href="#" style="color: #cbd5e1;">Unsubscribe</a></div>
+                        <div style="display: flex; justify-content: center; gap: 16px;">
+                            <a href="#" style="text-decoration: none; color: #cbd5e1;">Privacy</a>
+                            <a href="#" style="text-decoration: none; color: #cbd5e1;">Terms</a>
+                            <a href="#" style="text-decoration: none; color: #cbd5e1;">Unsubscribe</a>
+                        </div>
                     </div>
                 </div>
             </div>

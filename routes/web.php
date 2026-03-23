@@ -12,6 +12,7 @@ use App\Http\Controllers\Studio\ContentStudioController;
 use App\Http\Controllers\Studio\GenerationController;
 use App\Http\Controllers\Studio\TemplateController;
 use App\Http\Controllers\Studio\CategoryController;
+use App\Models\Contact;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
@@ -59,10 +60,20 @@ Route::get('/mail-preview', function () {
 });
 
 Route::get('/mail-preview2', function () {
-    $user = Auth::user();
-    $otp = rand(100000, 999999);
+    $data = [
+        'name' => 'Jugal Faswala'
+    ];
 
-    return new App\Mail\OtpVerificationMail($user, $otp);
+    return new App\Mail\WelcomeMail($data['name']);
+});
+
+Route::get('/mail-preview3', function () {
+    $name = 'John Doe';
+    $email = 'john@doe.com';
+
+    $resetUrl = url('/reset-password/sample-token?email=' . urlencode($email));
+
+    return view('emails.auth.reset-password', compact('name', 'resetUrl'));
 });
 
 Route::middleware(['auth', 'otp.verified'])->group(function () {
@@ -77,12 +88,12 @@ Route::middleware(['auth', 'otp.verified'])->group(function () {
     Route::post('/messages/{id}/regenerate', [ChatController::class, 'regenerateMessage'])->name('messages.regenerate');
     Route::delete('/messages/{id}', [ChatController::class, 'destroyMessage'])->name('messages.destroy');
 
-   //  Route::resource('posts', PostController::class)
-   //      ->except(['show', 'create', 'edit'])
-   //      ->names('posts')
-   //      ->parameters(['posts' => 'post']);
-   //  Route::post('posts/{post}/schedule', [PostController::class, 'schedule'])->name('posts.schedule');
-   //  Route::get('/render/post/{id}', [PostController::class, 'render'])->name('posts.render');
+    //  Route::resource('posts', PostController::class)
+    //      ->except(['show', 'create', 'edit'])
+    //      ->names('posts')
+    //      ->parameters(['posts' => 'post']);
+    //  Route::post('posts/{post}/schedule', [PostController::class, 'schedule'])->name('posts.schedule');
+    //  Route::get('/render/post/{id}', [PostController::class, 'render'])->name('posts.render');
 
     Route::resource('prompts', PromptController::class)->except(['show', 'create', 'edit', 'store']);
     Route::post('prompts/bulk', [PromptController::class, 'bulk'])->name('prompts.bulk');

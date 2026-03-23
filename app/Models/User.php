@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Notifications\ResetPassword;
 
 /**
  * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Conversation[] $conversations
@@ -91,5 +92,10 @@ class User extends Authenticatable
     public function usageLogs(): HasMany
     {
         return $this->hasMany(UsageLog::class);
+    }
+
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new ResetPassword($token));
     }
 }
