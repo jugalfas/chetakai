@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Ai\Agents\ChetakAgent;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\StorePromptTemplateRequest;
+use App\Http\Requests\Admin\UpdatePromptTemplateRequest;
 use App\Models\ContentType;
 use App\Models\Platform;
 use App\Models\PromptTemplate;
@@ -10,19 +13,27 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Laravel\Ai\Ai;
 
 class PromptTemplateController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
         $promptTemplates = PromptTemplate::query()
             ->with(['platform', 'contentType'])
+            ->when($request->search, function ($query, $search) {
+                $query->where('name', 'like', "%{$search}%")
+                    ->orWhere('prompt_template', 'like', "%{$search}%");
+            })
             ->latest()
             ->paginate(15)
             ->withQueryString();
 
         return Inertia::render('Admin/PromptTemplates/Index', [
             'promptTemplates' => $promptTemplates,
+            'filters' => $request->only(['search']),
         ]);
     }
 
@@ -37,19 +48,13 @@ class PromptTemplateController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(StorePromptTemplateRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'platform_id' => ['nullable', 'exists:platforms,id'],
-            'content_type_id' => ['nullable', 'exists:content_types,id'],
-            'prompt_template' => ['required', 'string'],
-            'status' => ['boolean'],
-        ]);
+        $validated = $request->validated();
 
-        $validated['status'] = $request->boolean('status', true);
-        $validated['platform_id'] = $request->input('platform_id') ?: null;
-        $validated['content_type_id'] = $request->input('content_type_id') ?: null;
+        if ($validated['is_default']) {
+            $this->ensureOnlyOneDefault($validated['platform_id'], $validated['content_type_id']);
+        }
 
         PromptTemplate::create($validated);
 
@@ -71,19 +76,13 @@ class PromptTemplateController extends Controller
         ]);
     }
 
-    public function update(Request $request, PromptTemplate $promptTemplate): RedirectResponse
+    public function update(UpdatePromptTemplateRequest $request, PromptTemplate $promptTemplate): RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'platform_id' => ['nullable', 'exists:platforms,id'],
-            'content_type_id' => ['nullable', 'exists:content_types,id'],
-            'prompt_template' => ['required', 'string'],
-            'status' => ['boolean'],
-        ]);
+        $validated = $request->validated();
 
-        $validated['status'] = $request->boolean('status', true);
-        $validated['platform_id'] = $request->input('platform_id') ?: null;
-        $validated['content_type_id'] = $request->input('content_type_id') ?: null;
+        if ($validated['is_default']) {
+            $this->ensureOnlyOneDefault($validated['platform_id'], $validated['content_type_id'], $promptTemplate->id);
+        }
 
         $promptTemplate->update($validated);
 
@@ -104,5 +103,45 @@ class PromptTemplateController extends Controller
         $promptTemplate->update(['status' => !$promptTemplate->status]);
 
         return back()->with('success', $promptTemplate->status ? 'Prompt template activated.' : 'Prompt template deactivated.');
+    }
+
+    public function test(Request $request, PromptTemplate $promptTemplate)
+    {
+        $validated = $request->validate([
+            'test_variables' => 'required|array',
+        ]);
+
+        $templateVariables = $promptTemplate->variables ?? [];
+        $testVariables = $validated['test_variables'];
+
+        $variables = array_merge($templateVariables, $testVariables);
+
+        $template = $promptTemplate->prompt_template;
+
+        $finalPrompt = preg_replace_callback('/\{\{([a-zA-Z0-9_-]+)\}\}/', function ($matches) use ($variables) {
+            $key = $matches[1];
+            return $variables[$key] ?? $matches[0];
+        }, $template);
+
+        // 🔥 REAL AI CALL
+        $response = (new ChetakAgent)->prompt($finalPrompt);
+
+        return response()->json([
+            'final_prompt' => $finalPrompt,
+            'parsed_variables' => $variables,
+            'ai_response' => json_decode($response->text, true),
+        ]);
+    }
+
+    private function ensureOnlyOneDefault($platformId, $contentTypeId, $excludeId = null)
+    {
+        PromptTemplate::query()
+            ->where('platform_id', $platformId)
+            ->where('content_type_id', $contentTypeId)
+            ->where('is_default', true)
+            ->when($excludeId, function ($query, $id) {
+                $query->where('id', '!=', $id);
+            })
+            ->update(['is_default' => false]);
     }
 }

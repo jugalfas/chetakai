@@ -47,6 +47,7 @@ Route::middleware('auth:admin')->group(function () {
         Route::put('/{promptTemplate}', [PromptTemplateController::class, 'update'])->name('update');
         Route::delete('/{promptTemplate}', [PromptTemplateController::class, 'destroy'])->name('destroy');
         Route::patch('/{promptTemplate}/toggle-status', [PromptTemplateController::class, 'toggleStatus'])->name('toggle-status');
+        Route::post('/{promptTemplate}/test', [PromptTemplateController::class, 'test'])->name('test');
     });
 
     Route::post('/templates/{template}/generate-prompt', [PromptTestController::class, 'generate'])

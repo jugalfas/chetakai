@@ -35,7 +35,7 @@ class OtpVerificationController extends Controller
             $user->save();
 
             Mail::to($user->email)->send(new WelcomeMail($user->first_name));
-            return redirect()->intended(route('dashboard', absolute: false));
+            return redirect()->intended(route('dashboard', false));
         }
 
         return back()->withErrors(['otp' => 'The provided OTP is invalid or has expired.']);

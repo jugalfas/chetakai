@@ -39,4 +39,8 @@ return [
         'client_secret' => env('META_APP_SECRET'),
         'redirect_uri' => env('META_REDIRECT_URI'),
     ],
+
+    'gemini' => [
+        'api_key' => env('GEMINI_API_KEY'),
+    ],
 ];
