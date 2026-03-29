@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\PromptTemplateController;
 use App\Http\Controllers\Admin\TemplateController;
 use App\Http\Controllers\Admin\PromptTestController;
 use App\Http\Controllers\Admin\ContactController;
+use App\Http\Controllers\Admin\SubscriptionPlanController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -26,6 +27,7 @@ Route::middleware('auth:admin')->group(function () {
 
     Route::prefix('users')->name('users.')->group(function () {
         Route::get('/', [UserController::class, 'index'])->name('index');
+        Route::patch('/{user}/status', [UserController::class, 'updateStatus'])->name('update-status');
         Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy');
     });
 
@@ -68,6 +70,7 @@ Route::middleware('auth:admin')->group(function () {
 
     Route::prefix('prompts')->name('prompts.')->group(function () {
         Route::get('/content-types', [PromptManagementController::class, 'contentTypes'])->name('content_types');
+        Route::get('/platforms', [PromptManagementController::class, 'platforms'])->name('platforms');
         Route::get('/categories', [PromptManagementController::class, 'categories'])->name('categories');
         Route::get('/goals', [PromptManagementController::class, 'contentGoals'])->name('content_goals');
         Route::get('/tones', [PromptManagementController::class, 'tones'])->name('tones');
@@ -76,5 +79,15 @@ Route::middleware('auth:admin')->group(function () {
 
         Route::post('/store', [PromptManagementController::class, 'store'])->name('store');
         Route::delete('/delete', [PromptManagementController::class, 'destroy'])->name('destroy');
+    });
+
+    // Subscription plans
+    Route::prefix('subscription-plans')->name('subscription-plans.')->group(function () {
+        Route::get('/', [SubscriptionPlanController::class, 'index'])->name('index');
+        Route::get('/create', [SubscriptionPlanController::class, 'create'])->name('create');
+        Route::post('/', [SubscriptionPlanController::class, 'store'])->name('store');
+        Route::get('/{subscriptionPlan}/edit', [SubscriptionPlanController::class, 'edit'])->name('edit');
+        Route::put('/{subscriptionPlan}', [SubscriptionPlanController::class, 'update'])->name('update');
+        Route::delete('/{subscriptionPlan}', [SubscriptionPlanController::class, 'destroy'])->name('destroy');
     });
 });

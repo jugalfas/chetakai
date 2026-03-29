@@ -7,6 +7,7 @@ use App\Models\Audience;
 use App\Models\Category;
 use App\Models\ContentGoal;
 use App\Models\ContentType;
+use App\Models\Platform;
 use App\Models\Style;
 use App\Models\Tone;
 use Illuminate\Http\Request;
@@ -18,6 +19,13 @@ class PromptManagementController extends Controller
     {
         return Inertia::render('Admin/PromptManagement/ContentTypes', [
             'items' => ContentType::orderBy('name')->get(),
+        ]);
+    }
+
+    public function platforms()
+    {
+        return Inertia::render('Admin/PromptManagement/Platforms', [
+            'items' => Platform::orderBy('name')->get(),
         ]);
     }
 

@@ -136,7 +136,7 @@ const getScopeClass = (scope) => {
                                     {{ item.platform?.name ?? 'Generic' }}
                                 </td>
                                 <td class="px-6 py-4 text-sm text-muted-foreground">
-                                    {{ item.contentType?.name ?? 'Unspecified' }}
+                                    {{ item.content_type?.name ?? 'Unspecified' }}
                                 </td>
                                 <td class="px-6 py-4 text-center">
                                     <span
