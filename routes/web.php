@@ -19,6 +19,11 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
+use App\Http\Controllers\Auth\ImpersonationController;
+
+Route::get('/impersonate/{token}', [ImpersonationController::class, 'login'])->name('impersonate.login');
+Route::post('/impersonate/logout', [ImpersonationController::class, 'logout'])->name('impersonate.logout');
+
 Route::get('/', function () {
     return Inertia::render('Welcome', [
         'canLogin' => Route::has('login'),

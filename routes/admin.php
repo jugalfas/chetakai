@@ -27,6 +27,9 @@ Route::middleware('auth:admin')->group(function () {
 
     Route::prefix('users')->name('users.')->group(function () {
         Route::get('/', [UserController::class, 'index'])->name('index');
+        Route::get('/{user}', [UserController::class, 'show'])->name('show');
+        Route::post('/{user}/impersonate', [UserController::class, 'impersonate'])->name('impersonate');
+        Route::post('/{user}/reset-otp', [UserController::class, 'resetOtp'])->name('reset-otp');
         Route::patch('/{user}/status', [UserController::class, 'updateStatus'])->name('update-status');
         Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy');
     });

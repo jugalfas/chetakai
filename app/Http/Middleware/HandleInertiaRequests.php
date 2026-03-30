@@ -34,6 +34,10 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
                 'admin' => $request->user('admin'),
+                'impersonating' => [
+                    'user_name' => $request->session()->get('impersonated_user_name'),
+                    'by_admin_id' => $request->session()->get('impersonated_by_admin_id'),
+                ],
                 'notifications' => $request->user() ? $request->user()->unreadNotifications()->latest()->limit(10)->get() : [],
                 'unreadNotificationsCount' => $request->user() ? $request->user()->unreadNotifications()->count() : 0,
                 'unreadMessagesCount' => $request->user('admin') ? \App\Models\Contact::where('is_read', false)->count() : 0,

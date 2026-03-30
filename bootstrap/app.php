@@ -26,6 +26,7 @@ return Application::configure(dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web([
+            \App\Http\Middleware\CheckUserStatus::class,
             \App\Http\Middleware\HandleInertiaRequests::class,
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
             VerifyCsrfToken::class,

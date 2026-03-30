@@ -103,7 +103,8 @@ const navigation = computed(() => {
 
 <template>
     <!-- Desktop sidebar -->
-    <div class="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:flex-col">
+    <div class="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:flex-col"
+    :style="{ top: $page.props.auth.impersonating?.user_name ? '46px' : '0' }">
         <div :class="[
             'flex grow flex-col overflow-y-auto bg-background shadow-sm border-r border-r-border transition-all duration-300',
             isCollapsed ? 'w-20' : 'w-64'

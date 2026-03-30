@@ -160,6 +160,24 @@ onMounted(() => {
 onUnmounted(() => {
     window.removeEventListener('click', handleOutsideClick);
 });
+
+const dropdownPosition = ref({ top: '0px', left: '0px' })
+
+const toggleDropdown = (event, userId) => {
+    if (openDropdown.value === userId) {
+        openDropdown.value = null
+        return
+    }
+
+    const rect = event.currentTarget.getBoundingClientRect()
+
+    dropdownPosition.value = {
+        top: rect.bottom + window.scrollY + 'px',
+        left: rect.right - 192 + 'px'
+    }
+
+    openDropdown.value = userId
+}
 </script>
 
 <template>
@@ -240,8 +258,8 @@ onUnmounted(() => {
             </div>
 
             <!-- Table -->
-            <div class="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
-                <div class="overflow-x-auto min-h-[400px]">
+            <div class="bg-card rounded-xl shadow-sm border border-border">
+                <div class="overflow-x-auto overflow-y-visible min-h-[400px]">
                     <table class="w-full text-left border-collapse">
                         <thead>
                             <tr class="bg-muted/50 border-b border-border relative z-10">
@@ -327,94 +345,99 @@ onUnmounted(() => {
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
                                     <div class="relative">
                                         <button 
-                                            @click.stop="openDropdown = openDropdown === user.id ? null : user.id"
+                                            @click.stop="toggleDropdown($event, user.id)"
                                             class="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-lg border border-transparent hover:border-border bg-transparent hover:bg-muted/50"
                                         >
                                             <EllipsisVerticalIcon class="h-5 w-5" />
                                         </button>
                                         
                                         <!-- Dropdown Menu -->
-                                        <div 
-                                            v-if="openDropdown === user.id"
-                                            class="absolute right-0 w-48 bg-card border border-border rounded-xl shadow-lg z-[100] overflow-hidden"
-                                            :class="index >= users.data.length - 1 && index > 0 ? 'bottom-full mb-2' : 'top-full mt-2'"
-                                        >
-                                            <div class="py-1">
-                                                <button class="w-full flex items-center px-4 py-2.5 text-xs text-foreground hover:bg-muted transition-colors">
-                                                    <EyeIcon class="h-4 w-4 mr-3 text-muted-foreground" />
-                                                    View detail
-                                                </button>
-                                                <button class="w-full flex items-center px-4 py-2.5 text-xs text-foreground hover:bg-muted transition-colors">
-                                                    <CreditCardIcon class="h-4 w-4 mr-3 text-muted-foreground" />
-                                                    Change plan
-                                                </button>
-                                                <button class="w-full flex items-center px-4 py-2.5 text-xs text-foreground hover:bg-muted transition-colors">
-                                                    <UserIcon class="h-4 w-4 mr-3 text-muted-foreground" />
-                                                    Login as user
-                                                </button>
-                                                <div class="h-px bg-border my-1"></div>
-                                                
-                                                <!-- Status Actions -->
-                                                <template v-if="user.status === 'active'">
-                                                    <button 
-                                                        class="w-full flex items-center px-4 py-2.5 text-xs text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
-                                                        @click="confirmStatusChange(user, 'suspended')"
+                                        <Teleport to="body">
+                                            <div 
+                                                v-if="openDropdown === user.id"
+                                                class="absolute right-0 w-48 bg-card border border-border rounded-xl shadow-lg z-[9999] overflow-hidden"
+                                                :style="dropdownPosition"
+                                            >
+                                                <div class="py-1">
+                                                    <Link 
+                                                        :href="route('admin.users.show', user.id)"
+                                                        class="w-full flex items-center px-4 py-2.5 text-xs text-foreground hover:bg-muted transition-colors"
                                                     >
-                                                        <NoSymbolIcon class="h-4 w-4 mr-3" />
-                                                        Suspend Account
+                                                        <EyeIcon class="h-4 w-4 mr-3 text-muted-foreground" />
+                                                        View detail
+                                                    </Link>
+                                                    <button class="w-full flex items-center px-4 py-2.5 text-xs text-foreground hover:bg-muted transition-colors">
+                                                        <CreditCardIcon class="h-4 w-4 mr-3 text-muted-foreground" />
+                                                        Change plan
                                                     </button>
+                                                    <button class="w-full flex items-center px-4 py-2.5 text-xs text-foreground hover:bg-muted transition-colors">
+                                                        <UserIcon class="h-4 w-4 mr-3 text-muted-foreground" />
+                                                        Login as user
+                                                    </button>
+                                                    <div class="h-px bg-border my-1"></div>
+                                                    
+                                                    <!-- Status Actions -->
+                                                    <template v-if="user.status === 'active'">
+                                                        <button 
+                                                            class="w-full flex items-center px-4 py-2.5 text-xs text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+                                                            @click="confirmStatusChange(user, 'suspended')"
+                                                        >
+                                                            <NoSymbolIcon class="h-4 w-4 mr-3" />
+                                                            Suspend Account
+                                                        </button>
+                                                        <button 
+                                                            class="w-full flex items-center px-4 py-2.5 text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
+                                                            @click="confirmStatusChange(user, 'banned')"
+                                                        >
+                                                            <NoSymbolIcon class="h-4 w-4 mr-3" />
+                                                            Ban User
+                                                        </button>
+                                                    </template>
+
+                                                    <template v-else-if="user.status === 'suspended'">
+                                                        <button 
+                                                            class="w-full flex items-center px-4 py-2.5 text-xs text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
+                                                            @click="confirmStatusChange(user, 'active')"
+                                                        >
+                                                            <CheckCircleIcon class="h-4 w-4 mr-3" />
+                                                            Activate Account
+                                                        </button>
+                                                        <button 
+                                                            class="w-full flex items-center px-4 py-2.5 text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
+                                                            @click="confirmStatusChange(user, 'banned')"
+                                                        >
+                                                            <NoSymbolIcon class="h-4 w-4 mr-3" />
+                                                            Ban User
+                                                        </button>
+                                                    </template>
+
+                                                    <template v-else-if="user.status === 'banned'">
+                                                        <button 
+                                                            class="w-full flex items-center px-4 py-2.5 text-xs text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
+                                                            @click="confirmStatusChange(user, 'active')"
+                                                        >
+                                                            <CheckCircleIcon class="h-4 w-4 mr-3" />
+                                                            Activate Account
+                                                        </button>
+                                                        <button 
+                                                            class="w-full flex items-center px-4 py-2.5 text-xs text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+                                                            @click="confirmStatusChange(user, 'suspended')"
+                                                        >
+                                                            <NoSymbolIcon class="h-4 w-4 mr-3" />
+                                                            Suspend Account
+                                                        </button>
+                                                    </template>
+
                                                     <button 
+                                                        @click="confirmDelete(user)"
                                                         class="w-full flex items-center px-4 py-2.5 text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
-                                                        @click="confirmStatusChange(user, 'banned')"
                                                     >
-                                                        <NoSymbolIcon class="h-4 w-4 mr-3" />
-                                                        Ban User
+                                                        <TrashIcon class="h-4 w-4 mr-3" />
+                                                        Delete Account
                                                     </button>
-                                                </template>
-
-                                                <template v-else-if="user.status === 'suspended'">
-                                                    <button 
-                                                        class="w-full flex items-center px-4 py-2.5 text-xs text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
-                                                        @click="confirmStatusChange(user, 'active')"
-                                                    >
-                                                        <CheckCircleIcon class="h-4 w-4 mr-3" />
-                                                        Activate Account
-                                                    </button>
-                                                    <button 
-                                                        class="w-full flex items-center px-4 py-2.5 text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
-                                                        @click="confirmStatusChange(user, 'banned')"
-                                                    >
-                                                        <NoSymbolIcon class="h-4 w-4 mr-3" />
-                                                        Ban User
-                                                    </button>
-                                                </template>
-
-                                                <template v-else-if="user.status === 'banned'">
-                                                    <button 
-                                                        class="w-full flex items-center px-4 py-2.5 text-xs text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
-                                                        @click="confirmStatusChange(user, 'active')"
-                                                    >
-                                                        <CheckCircleIcon class="h-4 w-4 mr-3" />
-                                                        Activate Account
-                                                    </button>
-                                                    <button 
-                                                        class="w-full flex items-center px-4 py-2.5 text-xs text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
-                                                        @click="confirmStatusChange(user, 'suspended')"
-                                                    >
-                                                        <NoSymbolIcon class="h-4 w-4 mr-3" />
-                                                        Suspend Account
-                                                    </button>
-                                                </template>
-
-                                                <button 
-                                                    @click="confirmDelete(user)"
-                                                    class="w-full flex items-center px-4 py-2.5 text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
-                                                >
-                                                    <TrashIcon class="h-4 w-4 mr-3" />
-                                                    Delete Account
-                                                </button>
+                                                </div>
                                             </div>
-                                        </div>
+                                        </Teleport>
                                     </div>
                                 </td>
                             </tr>

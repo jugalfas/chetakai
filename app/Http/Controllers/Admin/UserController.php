@@ -5,7 +5,11 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Plan;
 use App\Models\User;
+use App\Models\ImpersonationToken;
+use App\Mail\OtpVerificationMail;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 
 class UserController extends Controller
@@ -113,5 +117,106 @@ class UserController extends Controller
         ]);
 
         return back()->with('success', "User status updated to {$validated['status']}.");
+    }
+
+    public function show(User $user)
+    {
+        $user->load([
+            'subscriptions.plan',
+            'socialAccounts',
+        ]);
+
+        // Mixed activity log: recent generated contents + recent usage logs
+        $recentContents = $user->generatedContents()
+            ->with(['platform', 'contentType'])
+            ->latest()
+            ->limit(10)
+            ->get()
+            ->map(function($c) {
+                return [
+                    'id' => 'content_' . $c->id,
+                    'type' => $c->status === 'published' ? 'Published' : ($c->status === 'failed' ? 'Failed' : 'Generated'),
+                    'description' => $c->title ?: ($c->contentType?->name . ' content' . ($c->platform ? ' for ' . $c->platform->name : '')),
+                    'platform' => $c->platform?->name,
+                    'created_at' => $c->created_at,
+                    'status' => $c->status,
+                ];
+            });
+
+        $usageLogs = $user->usageLogs()
+            ->latest()
+            ->limit(10)
+            ->get()
+            ->map(function($l) {
+                return [
+                    'id' => 'log_' . $l->id,
+                    'type' => ucfirst($l->metric),
+                    'description' => ucfirst($l->metric) . ' usage detected',
+                    'platform' => null,
+                    'created_at' => $l->created_at,
+                    'status' => 'info',
+                ];
+            });
+
+        $activityLog = $recentContents->concat($usageLogs)->sortByDesc('created_at')->values()->take(10);
+
+        // Get count of generated contents
+        $user->loadCount('generatedContents');
+
+        // Content breakdown by content type
+        $contentBreakdown = $user->generatedContents()
+            ->join('content_types', 'generated_contents.content_type_id', '=', 'content_types.id')
+            ->selectRaw('content_types.name as title, count(*) as count')
+            ->groupBy('content_types.name')
+            ->get();
+
+        $defaultPlan = Plan::where('type', 'free')->first();
+
+        // Calculate stats for the UI
+        $stats = [
+            'posts_this_month' => $user->generatedContents()
+                ->where('created_at', '>=', now()->startOfMonth())
+                ->count(),
+            'total_posts_ever' => $user->generated_contents_count,
+            'published_count' => $user->generatedContents()
+                ->where('status', 'published')
+                ->count(),
+        ];
+
+        return Inertia::render('Admin/Users/Show', [
+            'user' => $user,
+            'contentBreakdown' => $contentBreakdown,
+            'defaultPlan' => $defaultPlan,
+            'stats' => $stats,
+            'activityLog' => $activityLog,
+        ]);
+    }
+
+    public function impersonate(User $user)
+    {
+        $token = ImpersonationToken::create([
+            'admin_id' => auth()->id(),
+            'user_id' => $user->id,
+            'token' => Str::random(64),
+            'expires_at' => now()->addMinutes(15),
+        ]);
+
+        return response()->json([
+            'url' => route('impersonate.login', $token->token)
+        ]);
+    }
+
+    public function resetOtp(User $user)
+    {
+        $otp = str_pad(mt_rand(0, 999999), 6, '0', STR_PAD_LEFT);
+
+        $user->update([
+            'otp' => $otp,
+            'otp_expires_at' => now()->addMinutes(10),
+        ]);
+
+        Mail::to($user->email)->send(new OtpVerificationMail($user, $otp));
+
+        return back()->with('success', "Reset OTP sent to {$user->email}.");
     }
 }
