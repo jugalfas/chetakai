@@ -1,7 +1,7 @@
 <script setup>
 import AdminLayout from "@/Layouts/AdminLayout.vue";
-import { Head, router, Link } from "@inertiajs/vue3";
-import { ref, watch, onMounted, onUnmounted } from "vue";
+import { Head, router, Link, usePage } from "@inertiajs/vue3";
+import { ref, watch, onMounted, onUnmounted, computed } from "vue";
 import {
     TrashIcon,
     MagnifyingGlassIcon,
@@ -16,6 +16,8 @@ import {
 import TextInput from "@/Components/TextInput.vue";
 import DeleteConfirmationModal from "@/Components/DeleteConfirmationModal.vue";
 import StatusConfirmationModal from "@/Components/StatusConfirmationModal.vue";
+import { XMarkIcon, CheckCircleIcon as CheckCircleIconSolid } from "@heroicons/vue/24/outline";
+import { PlusIcon } from "lucide-vue-next";
 
 const props = defineProps({
     users: Object,
@@ -31,6 +33,26 @@ const showDeleteModal = ref(false);
 const userToDelete = ref(null);
 const processing = ref(false);
 const openDropdown = ref(null);
+
+// Toast state (driven by Inertia flash)
+const page = usePage();
+const flashToast = ref(null);
+let flashTimer = null;
+const showFlash = (message, type = 'success') => {
+    clearTimeout(flashTimer);
+    flashToast.value = { message, type };
+    flashTimer = setTimeout(() => { flashToast.value = null; }, 4500);
+};
+watch(
+    () => page.props.flash?.success,
+    (val) => { if (val) showFlash(val, 'success'); },
+    { immediate: true }
+);
+watch(
+    () => page.props.flash?.error,
+    (val) => { if (val) showFlash(val, 'error'); },
+    { immediate: true }
+);
 
 const applyFilters = () => {
     router.get(
@@ -191,6 +213,13 @@ const toggleDropdown = (event, userId) => {
                     <h1 class="text-3xl font-bold tracking-tight text-foreground">Users</h1>
                     <p class="mt-1 text-sm text-muted-foreground">All registered accounts and their subscription status.</p>
                 </div>
+                <Link
+                    :href="route('admin.subscription-plans.create')"
+                    class="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium"
+                >
+                    <PlusIcon class="w-4 h-4 mr-2" />
+                    Create Plan
+                </Link>
             </div>
 
             <!-- Stats -->
@@ -502,5 +531,32 @@ const toggleDropdown = (event, userId) => {
             @close="showStatusModal = false"
             @confirm="updateStatus"
         />
+
+        <!-- Flash Toast -->
+        <Transition
+            enter-active-class="transition-all duration-300 ease-out"
+            enter-from-class="opacity-0 translate-y-2"
+            enter-to-class="opacity-100 translate-y-0"
+            leave-active-class="transition-all duration-200 ease-in"
+            leave-from-class="opacity-100 translate-y-0"
+            leave-to-class="opacity-0 translate-y-2"
+        >
+            <div
+                v-if="flashToast"
+                class="fixed bottom-6 right-6 z-[200] flex items-center gap-3 rounded-2xl border px-5 py-3.5 shadow-2xl bg-card"
+                :class="flashToast.type === 'error'
+                    ? 'border-rose-500/20'
+                    : 'border-emerald-500/20'"
+            >
+                <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
+                    :class="flashToast.type === 'error' ? 'bg-rose-500/10 text-rose-500' : 'bg-emerald-500/10 text-emerald-500'">
+                    <CheckCircleIconSolid class="h-4 w-4" />
+                </span>
+                <p class="text-sm font-semibold text-foreground">{{ flashToast.message }}</p>
+                <button @click="flashToast = null" class="ml-2 text-muted-foreground hover:text-foreground transition-colors">
+                    <XMarkIcon class="h-4 w-4" />
+                </button>
+            </div>
+        </Transition>
     </AdminLayout>
 </template>

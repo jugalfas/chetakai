@@ -32,6 +32,9 @@ Route::middleware('auth:admin')->group(function () {
         Route::post('/{user}/reset-otp', [UserController::class, 'resetOtp'])->name('reset-otp');
         Route::patch('/{user}/status', [UserController::class, 'updateStatus'])->name('update-status');
         Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy');
+        Route::post('/{user}/change-subscription', [UserController::class, 'changeSubscription'])->name('change-subscription');
+        Route::post('/{user}/reset-post-usage', [UserController::class, 'resetPostUsage'])->name('reset-post-usage');
+        Route::post('/{user}/internal-note', [UserController::class, 'saveNote'])->name('note');
     });
 
     // Quotes and Categories removed for now

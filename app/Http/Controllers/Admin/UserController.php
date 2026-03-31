@@ -7,6 +7,7 @@ use App\Models\Plan;
 use App\Models\User;
 use App\Models\ImpersonationToken;
 use App\Mail\OtpVerificationMail;
+use App\Mail\PlanChangedMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Mail;
@@ -101,9 +102,32 @@ class UserController extends Controller
 
     public function destroy(User $user)
     {
-        $user->delete();
+        // Hard delete in safe dependency order
+        // 1. Subscriptions
+        $user->subscriptions()->delete();
 
-        return back()->with('success', 'User deleted successfully.');
+        // 2. Usage logs
+        $user->usageLogs()->delete();
+
+        // 3. Connected social / OAuth accounts
+        if (method_exists($user, 'socialAccounts')) {
+            $user->socialAccounts()->delete();
+        }
+
+        // 4. Generated content
+        if (method_exists($user, 'generatedContents')) {
+            $user->generatedContents()->delete();
+        }
+
+        // 5. Impersonation tokens (if any)
+        \App\Models\ImpersonationToken::where('user_id', $user->id)->delete();
+
+        // 6. Finally, remove the user row
+        $user->forceDelete();
+
+        return redirect()
+            ->route('admin.users.index')
+            ->with('success', 'Account permanently deleted.');
     }
 
     public function updateStatus(Request $request, User $user)
@@ -187,9 +211,70 @@ class UserController extends Controller
             'user' => $user,
             'contentBreakdown' => $contentBreakdown,
             'defaultPlan' => $defaultPlan,
+            'allPlans' => Plan::where('status', true)->get(),
             'stats' => $stats,
             'activityLog' => $activityLog,
         ]);
+    }
+
+    public function changeSubscription(Request $request, User $user)
+    {
+        $validated = $request->validate([
+            'plan_id' => 'required|exists:plans,id',
+            'billing_cycle' => 'required|string|in:monthly,annual,manual',
+            'effective_date' => 'nullable|string|in:immediate,period_end',
+            'starts_at' => 'nullable|date',
+            'ends_at' => 'nullable|date',
+            'reason' => 'required|string|max:500',
+            'notify_user' => 'boolean',
+            'reset_usage' => 'boolean',
+        ]);
+
+        $plan = Plan::findOrFail($validated['plan_id']);
+        $oldSubscription = $user->subscriptions()->where('status', 'active')->first();
+        $oldPlan = $oldSubscription?->plan;
+
+        // Determine start date
+        $startsAt = now();
+        if (isset($validated['starts_at'])) {
+            $startsAt = now()->parse($validated['starts_at']);
+        } elseif (isset($validated['effective_date']) && $validated['effective_date'] === 'period_end' && $oldSubscription) {
+            $startsAt = $oldSubscription->ends_at ?: now();
+        }
+
+        // Update or create active subscription
+        if ($oldSubscription) {
+            $oldSubscription->update(['status' => 'cancelled', 'cancelled_at' => now()]);
+        }
+
+        // Determine end date
+        $endsAt = isset($validated['ends_at']) ? now()->parse($validated['ends_at']) : 
+                  ($validated['billing_cycle'] === 'annual' ? $startsAt->copy()->addYear() : $startsAt->copy()->addMonth());
+
+        $user->subscriptions()->create([
+            'plan_id' => $plan->id,
+            'status' => 'active',
+            'starts_at' => $startsAt,
+            'ends_at' => $endsAt,
+            'provider' => 'manual',
+            'internal_notes' => $validated['reason'],
+        ]);
+
+        // Handle usage reset
+        if ($validated['reset_usage'] ?? false) {
+            $user->usageLogs()->delete();
+        }
+
+        // Email notification if $validated['notify_user']
+        if ($validated['notify_user'] ?? false) {
+            Mail::to($user->email)->send(new PlanChangedMail(
+                $user, 
+                $plan->name, 
+                $oldPlan?->name
+            ));
+        }
+
+        return back()->with('success', "Plan changed to {$plan->name} successfully.");
     }
 
     public function impersonate(User $user)
@@ -218,5 +303,32 @@ class UserController extends Controller
         Mail::to($user->email)->send(new OtpVerificationMail($user, $otp));
 
         return back()->with('success', "Reset OTP sent to {$user->email}.");
+    }
+
+    public function resetPostUsage(User $user)
+    {
+        // Delete all usage_logs for this user created in the current calendar month,
+        // effectively resetting their monthly post quota back to 0.
+        $user->usageLogs()
+            ->where('logged_at', '>=', now()->startOfMonth())
+            ->delete();
+
+        // TODO (future): Write an audit log row with:
+        //   action: post_usage_reset, admin_id: auth()->id(), user_id: $user->id, timestamp: now()
+        // This will allow tracking which admin triggered the reset and when.
+
+        return back()->with('success', 'Post usage reset successfully.');
+    }
+
+    public function saveNote(Request $request, User $user)
+    {
+        $request->validate([
+            'note' => 'nullable|string'
+        ]);
+
+        $user->internal_notes = $request->note;
+        $user->save();
+
+        return back()->with('success', 'Note saved.');
     }
 }

@@ -31,6 +31,7 @@ class User extends Authenticatable
         'timezone',
         'avatar_path',
         'status',
+        'internal_notes',
         'onboarding_completed_at',
         'otp',
         'otp_expires_at',

@@ -1,7 +1,7 @@
 <script setup>
 import AdminLayout from "@/Layouts/AdminLayout.vue";
-import { Head, Link, router } from "@inertiajs/vue3";
-import { ref } from "vue";
+import { Head, Link, router, useForm } from "@inertiajs/vue3";
+import { ref, computed } from "vue";
 import {
     ChevronLeftIcon,
     ArrowRightOnRectangleIcon,
@@ -10,20 +10,32 @@ import {
     NoSymbolIcon,
     TrashIcon,
     CheckCircleIcon,
+    XMarkIcon,
 } from "@heroicons/vue/24/outline";
 import StatusConfirmationModal from "@/Components/StatusConfirmationModal.vue";
-import DeleteConfirmationModal from "@/Components/DeleteConfirmationModal.vue";
+import PermanentDeleteModal from "@/Components/PermanentDeleteModal.vue";
 import ImpersonateConfirmationModal from "@/Components/ImpersonateConfirmationModal.vue";
 import ResetOtpConfirmationModal from "@/Components/ResetOtpConfirmationModal.vue";
+import ResetPostUsageModal from "@/Components/ResetPostUsageModal.vue";
+import ChangePlanModal from "@/Components/ChangePlanModal.vue";
 import axios from "axios";
 
 const props = defineProps({
     user: Object,
     contentBreakdown: Array,
     defaultPlan: Object,
+    allPlans: Array,
     stats: Object,
     activityLog: Array,
 });
+
+const form = useForm({
+    note: props.user.internal_notes ?? ''
+})
+
+function saveNote() {
+    form.post(route('admin.users.note', props.user.id))
+}
 
 const getInitials = (user) => {
     return (user.first_name?.[0] || "") + (user.last_name?.[0] || "");
@@ -74,7 +86,20 @@ const statusToChange = ref(null);
 const showDeleteModal = ref(false);
 const showImpersonateModal = ref(false);
 const showResetOtpModal = ref(false);
+const showPlanModal = ref(false);
+const showResetPostUsageModal = ref(false);
 const processing = ref(false);
+const updatePlanProcessing = ref(false);
+const resetPostUsageProcessing = ref(false);
+
+// Toast state
+const toast = ref(null); // { message, type }
+let toastTimer = null;
+const showToast = (message, type = 'success') => {
+    clearTimeout(toastTimer);
+    toast.value = { message, type };
+    toastTimer = setTimeout(() => { toast.value = null; }, 4000);
+};
 
 const confirmStatusChange = (status) => {
     statusToChange.value = status;
@@ -105,12 +130,13 @@ const deleteUser = () => {
     router.delete(route('admin.users.destroy', props.user.id), {
         onBefore: () => processing.value = true,
         onFinish: () => processing.value = false,
-        onSuccess: () => {
-            showDeleteModal.value = false;
-            router.visit(route('admin.users.index'));
+        onError: () => {
+            processing.value = false;
+            showToast('Failed to delete account. Please try again.', 'error');
         }
     });
 };
+
 
 const confirmImpersonate = () => {
     showImpersonateModal.value = true;
@@ -142,6 +168,33 @@ const resetOtp = () => {
         onSuccess: () => {
             showResetOtpModal.value = false;
         }
+    });
+};
+
+const handleChangePlan = (data) => {
+    router.post(route('admin.users.change-subscription', props.user.id), data, {
+        onBefore: () => updatePlanProcessing.value = true,
+        onFinish: () => {
+            updatePlanProcessing.value = false;
+            showPlanModal.value = false;
+            router.visit(route('admin.users.show', props.user.id));
+        },
+        preserveScroll: true
+    });
+};
+
+const resetPostUsage = () => {
+    router.post(route('admin.users.reset-post-usage', props.user.id), {}, {
+        onBefore: () => resetPostUsageProcessing.value = true,
+        onFinish: () => {
+            resetPostUsageProcessing.value = false;
+            showResetPostUsageModal.value = false;
+        },
+        onSuccess: () => {
+            showToast('Post usage reset successfully');
+            router.reload({ only: ['stats'] });
+        },
+        preserveScroll: true,
     });
 };
 
@@ -355,7 +408,10 @@ const progressWidth = postLimit > 0 ? Math.min((usedPosts / postLimit) * 100, 10
                             </div>
                         </div>
 
-                        <button class="w-full py-2.5 rounded-xl bg-background border border-border hover:bg-muted text-xs font-bold text-foreground transition-all flex items-center justify-center gap-2 ring-offset-background focus:outline-none focus:ring-2 focus:ring-primary">
+                        <button 
+                            @click="showPlanModal = true"
+                            class="w-full py-2.5 rounded-xl bg-background border border-border hover:bg-muted text-xs font-bold text-foreground transition-all flex items-center justify-center gap-2 ring-offset-background focus:outline-none focus:ring-2 focus:ring-primary"
+                        >
                             <ArrowPathIcon class="w-4 h-4" />
                             Change Plan
                         </button>
@@ -373,7 +429,7 @@ const progressWidth = postLimit > 0 ? Math.min((usedPosts / postLimit) * 100, 10
                                 <KeyIcon class="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
                                 Reset password / OTP
                             </button>
-                            <button class="w-full group flex items-center gap-3 px-4 py-2.5 rounded-xl border border-border hover:bg-muted text-xs font-bold text-foreground transition-all">
+                            <button @click="showResetPostUsageModal = true" class="w-full group flex items-center gap-3 px-4 py-2.5 rounded-xl border border-border hover:bg-muted text-xs font-bold text-foreground transition-all">
                                 <ArrowPathIcon class="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
                                 Reset post usage
                             </button>
@@ -407,8 +463,9 @@ const progressWidth = postLimit > 0 ? Math.min((usedPosts / postLimit) * 100, 10
                     <!-- Internal Notes -->
                     <div class="bg-card border border-border rounded-2xl p-6 shadow-sm">
                         <h3 class="text-sm font-bold text-foreground mb-4">Internal Notes</h3>
-                        <textarea class="w-full bg-muted/20 border border-border rounded-xl p-3 text-xs text-foreground placeholder:text-muted-foreground/50 focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all min-h-[100px] resize-none" placeholder="Add admin notes about this user — hidden from user…"></textarea>
-                        <button class="w-full mt-3 py-2 bg-foreground text-background rounded-xl text-xs font-bold hover:bg-foreground/90 transition-all">
+                        <textarea v-model="form.note" class="w-full bg-muted/20 border border-border rounded-xl p-3 text-xs text-foreground placeholder:text-muted-foreground/50 focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all min-h-[100px] resize-none" placeholder="Add admin notes about this user — hidden from user…"></textarea>
+                        <button @click="saveNote"
+                            :disabled="form.processing" class="w-full mt-3 py-2 bg-foreground text-background rounded-xl text-xs font-bold hover:bg-foreground/90 transition-all">
                             Save Note
                         </button>
                     </div>
@@ -421,16 +478,17 @@ const progressWidth = postLimit > 0 ? Math.min((usedPosts / postLimit) * 100, 10
             :show="showStatusModal"
             :status="statusToChange"
             :user-name="user.first_name + ' ' + user.last_name"
+            :current-status="user.status"
             :processing="processing"
             @close="showStatusModal = false"
             @confirm="updateStatus"
         />
 
-        <DeleteConfirmationModal
+        <PermanentDeleteModal
             :show="showDeleteModal"
             :processing="processing"
-            title="Delete User"
-            message="Are you sure you want to delete this user? This action cannot be undone."
+            :user-name="user.first_name + ' ' + user.last_name"
+            :user-email="user.email"
             @close="showDeleteModal = false"
             @confirm="deleteUser"
         />
@@ -439,6 +497,7 @@ const progressWidth = postLimit > 0 ? Math.min((usedPosts / postLimit) * 100, 10
             :show="showImpersonateModal"
             :processing="processing"
             :user-name="user.first_name + ' ' + user.last_name"
+            :user-id="user.id"
             @close="showImpersonateModal = false"
             @confirm="impersonateUser"
         />
@@ -451,6 +510,50 @@ const progressWidth = postLimit > 0 ? Math.min((usedPosts / postLimit) * 100, 10
             @close="showResetOtpModal = false"
             @confirm="resetOtp"
         />
+
+        <ChangePlanModal
+            :show="showPlanModal"
+            :user="user"
+            :current-plan="currentPlan"
+            :all-plans="allPlans"
+            :stats="stats"
+            :processing="updatePlanProcessing"
+            @close="showPlanModal = false"
+            @confirm="handleChangePlan"
+        />
+
+        <ResetPostUsageModal
+            :show="showResetPostUsageModal"
+            :processing="resetPostUsageProcessing"
+            :user-name="user.first_name + ' ' + user.last_name"
+            :used-posts="usedPosts"
+            :post-limit="postLimit"
+            @close="showResetPostUsageModal = false"
+            @confirm="resetPostUsage"
+        />
+
+        <!-- Toast notification -->
+        <Transition
+            enter-active-class="transition-all duration-300 ease-out"
+            enter-from-class="opacity-0 translate-y-2"
+            enter-to-class="opacity-100 translate-y-0"
+            leave-active-class="transition-all duration-200 ease-in"
+            leave-from-class="opacity-100 translate-y-0"
+            leave-to-class="opacity-0 translate-y-2"
+        >
+            <div
+                v-if="toast"
+                class="fixed bottom-6 right-6 z-[200] flex items-center gap-3 rounded-2xl border border-emerald-500/20 bg-card px-5 py-3.5 shadow-2xl"
+            >
+                <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500">
+                    <CheckCircleIcon class="h-4 w-4" />
+                </span>
+                <p class="text-sm font-semibold text-foreground">{{ toast.message }}</p>
+                <button @click="toast = null" class="ml-2 text-muted-foreground hover:text-foreground transition-colors">
+                    <XMarkIcon class="h-4 w-4" />
+                </button>
+            </div>
+        </Transition>
     </AdminLayout>
 </template>
 
