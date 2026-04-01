@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
+use Spatie\Activitylog\Models\Activity;
 
 class UserController extends Controller
 {
@@ -165,6 +166,11 @@ class UserController extends Controller
             ]);
         }
 
+        activity()
+            ->performedOn($user)
+            ->causedBy(auth()->guard('admin')->user())
+            ->log('created user');
+
         return redirect()->route('admin.users.index')->with('success', 'User successfully created.');
     }
 
@@ -190,7 +196,16 @@ class UserController extends Controller
         // 5. Impersonation tokens (if any)
         \App\Models\ImpersonationToken::where('user_id', $user->id)->delete();
 
-        // 6. Finally, remove the user row
+        // 6. Activity logs related to this user
+        Activity::where(function ($query) use ($user) {
+            $query->where('subject_type', \App\Models\User::class)
+                  ->where('subject_id', $user->id);
+        })->orWhere(function ($query) use ($user) {
+            $query->where('causer_type', \App\Models\User::class)
+                  ->where('causer_id', $user->id);
+        })->delete();
+
+        // 7. Finally, remove the user row
         $user->forceDelete();
 
         return redirect()
@@ -226,7 +241,20 @@ class UserController extends Controller
             $user->onboarding_completed_at = null;
         }
 
+        $dirty = $user->getDirty();
+        $original = array_intersect_key($user->getOriginal(), $dirty);
         $user->save();
+
+        if (count($dirty) > 0) {
+            activity()
+                ->performedOn($user)
+                ->causedBy(auth()->guard('admin')->user())
+                ->withProperties([
+                    'attributes' => $dirty,
+                    'old' => $original,
+                ])
+                ->log('updated details');
+        }
 
         return redirect()->back();
     }
@@ -237,9 +265,17 @@ class UserController extends Controller
             'status' => 'required|string|in:active,suspended,banned',
         ]);
 
+        $oldStatus = $user->status;
+
         $user->update([
             'status' => $validated['status']
         ]);
+
+        activity()
+            ->performedOn($user)
+            ->causedBy(auth()->guard('admin')->user())
+            ->withProperties(['old_status' => $oldStatus, 'new_status' => $validated['status']])
+            ->log('changed status');
 
         return back()->with('success', "User status updated to {$validated['status']}.");
     }
@@ -375,6 +411,12 @@ class UserController extends Controller
             ));
         }
 
+        activity()
+            ->performedOn($user)
+            ->causedBy(auth()->guard('admin')->user())
+            ->withProperties(['old_plan' => $oldPlan?->name, 'new_plan' => $plan->name])
+            ->log('changed plan');
+
         return back()->with('success', "Plan changed to {$plan->name} successfully.");
     }
 
@@ -386,6 +428,11 @@ class UserController extends Controller
             'token' => Str::random(64),
             'expires_at' => now()->addMinutes(15),
         ]);
+
+        activity()
+            ->performedOn($user)
+            ->causedBy(auth()->guard('admin')->user())
+            ->log('impersonated user');
 
         return response()->json([
             'url' => route('impersonate.login', $token->token)
@@ -403,6 +450,11 @@ class UserController extends Controller
 
         Mail::to($user->email)->send(new OtpVerificationMail($user, $otp));
 
+        activity()
+            ->performedOn($user)
+            ->causedBy(auth()->guard('admin')->user())
+            ->log('sent reset otp');
+
         return back()->with('success', "Reset OTP sent to {$user->email}.");
     }
 
@@ -414,9 +466,10 @@ class UserController extends Controller
             ->where('logged_at', '>=', now()->startOfMonth())
             ->delete();
 
-        // TODO (future): Write an audit log row with:
-        //   action: post_usage_reset, admin_id: auth()->id(), user_id: $user->id, timestamp: now()
-        // This will allow tracking which admin triggered the reset and when.
+        activity()
+            ->performedOn($user)
+            ->causedBy(auth()->guard('admin')->user())
+            ->log('reset post usage');
 
         return back()->with('success', 'Post usage reset successfully.');
     }
@@ -429,6 +482,11 @@ class UserController extends Controller
 
         $user->internal_notes = $request->note;
         $user->save();
+
+        activity()
+            ->performedOn($user)
+            ->causedBy(auth()->guard('admin')->user())
+            ->log('updated internal notes');
 
         return back()->with('success', 'Note saved.');
     }
