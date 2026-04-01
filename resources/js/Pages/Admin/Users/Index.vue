@@ -214,11 +214,11 @@ const toggleDropdown = (event, userId) => {
                     <p class="mt-1 text-sm text-muted-foreground">All registered accounts and their subscription status.</p>
                 </div>
                 <Link
-                    :href="route('admin.subscription-plans.create')"
+                    :href="route('admin.users.create')"
                     class="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium"
                 >
                     <PlusIcon class="w-4 h-4 mr-2" />
-                    Create Plan
+                    Create User
                 </Link>
             </div>
 

@@ -100,6 +100,74 @@ class UserController extends Controller
         ]);
     }
 
+    public function create()
+    {
+        return Inertia::render('Admin/Users/Create', [
+            'plans' => Plan::where('status', true)->get(),
+        ]);
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users',
+            'timezone' => 'nullable|string|max:255',
+            'password' => 'nullable|string|min:8|confirmed',
+            'plan_id' => 'required|exists:plans,id',
+            'billing_cycle' => 'required|string|in:Monthly,Annual,Manual / custom',
+            'starts_at' => 'nullable|date',
+            'ends_at' => 'nullable|date',
+            'internal_notes' => 'nullable|string',
+            'mark_email_verified' => 'boolean',
+            'is_active' => 'boolean',
+            'send_welcome_email' => 'boolean',
+            'require_password_change' => 'boolean',
+        ]);
+
+        $user = User::create([
+            'first_name' => $validated['first_name'],
+            'last_name' => $validated['last_name'],
+            'email' => $validated['email'],
+            'timezone' => $validated['timezone'] ?: 'UTC',
+            'password' => !empty($validated['password']) ? \Illuminate\Support\Facades\Hash::make($validated['password']) : \Illuminate\Support\Facades\Hash::make(\Illuminate\Support\Str::random(16)),
+            'email_verified_at' => ($validated['mark_email_verified'] ?? false) ? now() : null,
+            'status' => ($validated['is_active'] ?? true) ? 'active' : 'suspended',
+            'internal_notes' => $validated['internal_notes'],
+            'force_password_reset' => $validated['require_password_change'] ?? false,
+        ]);
+
+        // Assign subscription
+        $plan = Plan::findOrFail($validated['plan_id']);
+        $startsAt = !empty($validated['starts_at']) ? \Carbon\Carbon::parse($validated['starts_at']) : now();
+        $endsAt = !empty($validated['ends_at']) ? \Carbon\Carbon::parse($validated['ends_at']) : 
+                  ($validated['billing_cycle'] === 'Annual' ? $startsAt->copy()->addYear() : 
+                  ($validated['billing_cycle'] === 'Monthly' ? $startsAt->copy()->addMonth() : null));
+
+        $user->subscriptions()->create([
+            'plan_id' => $plan->id,
+            'status' => 'active',
+            'starts_at' => $startsAt,
+            'ends_at' => $endsAt,
+            'provider' => 'manual',
+            'internal_notes' => 'Assigned during account creation from admin portal',
+        ]);
+
+        if ($validated['send_welcome_email'] ?? false) {
+            Mail::to($user->email)->send(new \App\Mail\WelcomeMail($user->first_name));
+        }
+
+        // Send 'set your password' email link if the password was left blank
+        if (empty($validated['password'])) {
+            \Illuminate\Support\Facades\Password::sendResetLink([
+                'email' => $user->email
+            ]);
+        }
+
+        return redirect()->route('admin.users.index')->with('success', 'User successfully created.');
+    }
+
     public function destroy(User $user)
     {
         // Hard delete in safe dependency order

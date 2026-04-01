@@ -35,6 +35,8 @@ class User extends Authenticatable
         'onboarding_completed_at',
         'otp',
         'otp_expires_at',
+        'email_verified_at',
+        'force_password_reset',
     ];
 
     /**

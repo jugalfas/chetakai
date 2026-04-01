@@ -27,6 +27,8 @@ Route::middleware('auth:admin')->group(function () {
 
     Route::prefix('users')->name('users.')->group(function () {
         Route::get('/', [UserController::class, 'index'])->name('index');
+        Route::post('/', [UserController::class, 'store'])->name('store');
+        Route::get('/create', [UserController::class, 'create'])->name('create');
         Route::get('/{user}', [UserController::class, 'show'])->name('show');
         Route::post('/{user}/impersonate', [UserController::class, 'impersonate'])->name('impersonate');
         Route::post('/{user}/reset-otp', [UserController::class, 'resetOtp'])->name('reset-otp');
