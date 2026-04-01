@@ -33,6 +33,7 @@ Route::middleware('auth:admin')->group(function () {
         Route::post('/{user}/impersonate', [UserController::class, 'impersonate'])->name('impersonate');
         Route::post('/{user}/reset-otp', [UserController::class, 'resetOtp'])->name('reset-otp');
         Route::patch('/{user}/status', [UserController::class, 'updateStatus'])->name('update-status');
+        Route::put('/{user}/details', [UserController::class, 'updateDetails'])->name('update-details');
         Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy');
         Route::post('/{user}/change-subscription', [UserController::class, 'changeSubscription'])->name('change-subscription');
         Route::post('/{user}/reset-post-usage', [UserController::class, 'resetPostUsage'])->name('reset-post-usage');

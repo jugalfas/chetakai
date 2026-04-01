@@ -11,7 +11,20 @@ import {
     TrashIcon,
     CheckCircleIcon,
     XMarkIcon,
+    UserCircleIcon,
 } from "@heroicons/vue/24/outline";
+import { ChevronDown, Check } from "lucide-vue-next";
+import {
+    SelectRoot,
+    SelectTrigger,
+    SelectValue,
+    SelectPortal,
+    SelectContent,
+    SelectViewport,
+    SelectItem,
+    SelectItemText,
+    SelectItemIndicator,
+} from "radix-vue";
 import StatusConfirmationModal from "@/Components/StatusConfirmationModal.vue";
 import PermanentDeleteModal from "@/Components/PermanentDeleteModal.vue";
 import ImpersonateConfirmationModal from "@/Components/ImpersonateConfirmationModal.vue";
@@ -32,6 +45,28 @@ const props = defineProps({
 const form = useForm({
     note: props.user.internal_notes ?? ''
 })
+
+const isEditingDetails = ref(false);
+
+const editForm = useForm({
+    first_name: props.user.first_name,
+    last_name: props.user.last_name,
+    email: props.user.email,
+    timezone: props.user.timezone,
+    is_verified: !!props.user.email_verified_at,
+    reset_onboarding: false,
+});
+
+const saveDetails = () => {
+    editForm.put(route('admin.users.update-details', props.user.id), {
+        preserveScroll: true,
+        onSuccess: () => {
+            isEditingDetails.value = false;
+            editForm.reset_onboarding = false;
+            showToast('User details updated successfully');
+        }
+    });
+};
 
 function saveNote() {
     form.post(route('admin.users.note', props.user.id))
@@ -79,6 +114,32 @@ const getPlanBadgeClass = (planType) => {
         default: return 'badge-free';
     }
 };
+
+const selectTriggerClasses = "flex w-full items-center justify-between rounded-[calc(var(--radius)-2px)] border border-input px-3 py-2 text-[13px] bg-background text-foreground focus:outline-none focus:border-ring focus:shadow-[0_0_0_2px_hsl(var(--ring)/0.2)] transition-all";
+const selectContentClasses = "z-[100] w-[--radix-select-trigger-width] overflow-hidden rounded-md border bg-[#041C32] text-popover-foreground shadow-md border-sidebar-border";
+const selectItemClasses = "relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-2 pr-9 text-[13px] outline-none focus:bg-accent focus:text-accent-foreground data-[state=checked]:bg-[#092644] data-[state=checked]:text-white data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-muted/20 transition-colors";
+
+const timezones = computed(() => {
+    try {
+        if (typeof Intl === 'undefined' || !Intl.supportedValuesOf) return [];
+        let tzs = Intl.supportedValuesOf('timeZone');
+        tzs = tzs.map(tz => tz === 'Asia/Calcutta' ? 'Asia/Kolkata' : tz);
+
+        return tzs.map(tz => {
+            try {
+                const date = new Date();
+                const offsetStr = new Intl.DateTimeFormat('en-US', { timeZone: tz, timeZoneName: 'shortOffset' }).format(date);
+                const match = offsetStr.match(/(GMT[+-]?\d*(?::\d*)?)/);
+                const display = match ? match[1] : 'GMT';
+                return { value: tz, label: `${tz} (${display})` };
+            } catch (e) {
+                return { value: tz, label: tz };
+            }
+        }).sort((a,b) => a.value.localeCompare(b.value));
+    } catch {
+        return [{ value: 'Asia/Kolkata', label: 'Asia/Kolkata (GMT+5:30)' }];
+    }
+});
 
 // Modals state
 const showStatusModal = ref(false);
@@ -275,10 +336,13 @@ const progressWidth = postLimit > 0 ? Math.min((usedPosts / postLimit) * 100, 10
                 <div class="lg:col-span-2 space-y-6">
                     <!-- General Information -->
                     <div class="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
-                        <div class="px-6 py-4 border-b border-border bg-muted/30">
+                        <div class="px-6 py-4 border-b border-border bg-muted/30 flex items-center justify-between">
                             <h3 class="text-sm font-bold text-foreground">General Information</h3>
+                            <button v-if="!isEditingDetails" @click="isEditingDetails = true" class="text-xs text-primary font-bold hover:underline transition-colors focus:outline-none">Edit Details</button>
                         </div>
-                        <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-10">
+                        
+                        <!-- Read Mode -->
+                        <div v-if="!isEditingDetails" class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-10">
                             <div v-for="(val, label) in { 
                                 'First Name': user.first_name, 
                                 'Last Name': user.last_name,
@@ -294,6 +358,83 @@ const progressWidth = postLimit > 0 ? Math.min((usedPosts / postLimit) * 100, 10
                                 </p>
                             </div>
                         </div>
+
+                        <!-- Edit Mode -->
+                        <form v-else @submit.prevent="saveDetails" class="p-6 bg-background relative">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                                <div>
+                                    <label class="block text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2">First Name <span class="text-rose-500">*</span></label>
+                                    <input type="text" v-model="editForm.first_name" class="w-full h-10 px-3 rounded-md bg-transparent border border-input text-[13px] text-foreground focus:ring-2 focus:ring-ring/20 focus:border-ring outline-none transition-all">
+                                    <div v-if="editForm.errors.first_name" class="text-xs text-rose-500 mt-1">{{ editForm.errors.first_name }}</div>
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Last Name <span class="text-rose-500">*</span></label>
+                                    <input type="text" v-model="editForm.last_name" class="w-full h-10 px-3 rounded-md bg-transparent border border-input text-[13px] text-foreground focus:ring-2 focus:ring-ring/20 focus:border-ring outline-none transition-all">
+                                    <div v-if="editForm.errors.last_name" class="text-xs text-rose-500 mt-1">{{ editForm.errors.last_name }}</div>
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Email Address <span class="text-rose-500">*</span></label>
+                                    <input type="email" v-model="editForm.email" class="w-full h-10 px-3 rounded-md bg-transparent border border-input text-[13px] text-foreground focus:ring-2 focus:ring-ring/20 focus:border-ring outline-none transition-all" spellcheck="false" data-lpignore="true">
+                                    <div v-if="editForm.errors.email" class="text-xs text-rose-500 mt-1">{{ editForm.errors.email }}</div>
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Timezone</label>
+                                    <SelectRoot v-model="editForm.timezone">
+                                        <SelectTrigger :class="[selectTriggerClasses, editForm.errors.timezone ? 'border-rose-500' : '']">
+                                            <SelectValue placeholder="Select timezone" />
+                                            <ChevronDown class="h-3 w-3 opacity-50" />
+                                        </SelectTrigger>
+                                        <SelectPortal>
+                                            <SelectContent :class="[selectContentClasses, 'max-h-[250px]']" position="popper" :side-offset="5">
+                                                <SelectViewport class="p-1 overflow-y-auto max-h-[240px] custom-scrollbar">
+                                                    <SelectItem v-for="tz in timezones" :key="tz.value" :value="tz.value" :class="selectItemClasses">
+                                                        <SelectItemText>{{ tz.label }}</SelectItemText>
+                                                        <SelectItemIndicator class="absolute right-3">
+                                                            <Check class="h-3 w-3 stroke-[3px]" />
+                                                        </SelectItemIndicator>
+                                                    </SelectItem>
+                                                </SelectViewport>
+                                            </SelectContent>
+                                        </SelectPortal>
+                                    </SelectRoot>
+                                    <div v-if="editForm.errors.timezone" class="text-xs text-rose-500 mt-1">{{ editForm.errors.timezone }}</div>
+                                </div>
+                            </div>
+
+                            <div class="space-y-6 mb-10 mt-10">
+                                <label class="flex items-center gap-4 cursor-pointer group w-max">
+                                    <div class="relative flex items-center">
+                                        <input type="checkbox" v-model="editForm.is_verified" class="peer sr-only">
+                                        <div class="w-10 h-6 bg-muted rounded-full peer-checked:bg-emerald-500 transition-colors"></div>
+                                        <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-all peer-checked:translate-x-4"></div>
+                                    </div>
+                                    <div>
+                                        <p class="text-[13px] font-bold text-foreground">Email is verified</p>
+                                        <p class="text-[11px] text-muted-foreground mt-0.5">Allows user to login without initial OTP email verification constraint.</p>
+                                    </div>
+                                </label>
+
+                                <label class="flex items-center gap-4 cursor-pointer group w-max">
+                                    <div class="relative flex items-center">
+                                        <input type="checkbox" v-model="editForm.reset_onboarding" class="peer sr-only">
+                                        <div class="w-10 h-6 bg-muted rounded-full peer-checked:bg-amber-500 transition-colors"></div>
+                                        <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-all peer-checked:translate-x-4"></div>
+                                    </div>
+                                    <div>
+                                        <p class="text-[13px] font-bold text-foreground">Reset onboarding status</p>
+                                        <p class="text-[11px] text-muted-foreground mt-0.5">Will force the user to re-complete onboarding tour on their next login.</p>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div class="flex items-center gap-3 justify-end border-t border-border pt-6">
+                                <button type="button" @click="isEditingDetails = false; editForm.reset()" class="px-5 py-2.5 rounded-xl border border-border bg-transparent text-foreground hover:bg-muted text-[13px] font-bold transition-colors">Cancel</button>
+                                <button type="submit" :disabled="editForm.processing" class="flex items-center justify-center min-w-[140px] gap-2 px-6 py-2.5 rounded-xl bg-primary text-primary-foreground text-[13px] font-bold hover:bg-primary/90 shadow-sm transition-all disabled:opacity-50">
+                                    <svg v-if="editForm.processing" class="animate-spin -ml-1 mr-1 h-3.5 w-3.5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                    {{ editForm.processing ? 'Saving...' : 'Save Changes' }}
+                                </button>
+                            </div>
+                        </form>
                     </div>
 
                     <!-- Usage Stats -->

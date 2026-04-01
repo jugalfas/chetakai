@@ -198,6 +198,39 @@ class UserController extends Controller
             ->with('success', 'Account permanently deleted.');
     }
 
+    public function updateDetails(Request $request, User $user)
+    {
+        $validated = $request->validate([
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            'timezone' => 'required|string',
+            'is_verified' => 'boolean',
+            'reset_onboarding' => 'boolean',
+        ]);
+
+        $user->first_name = $validated['first_name'];
+        $user->last_name = $validated['last_name'];
+        $user->email = $validated['email'];
+        $user->timezone = $validated['timezone'];
+
+        if ($validated['is_verified']) {
+            if (!$user->email_verified_at) {
+                $user->email_verified_at = now();
+            }
+        } else {
+            $user->email_verified_at = null;
+        }
+
+        if ($validated['reset_onboarding'] ?? false) {
+            $user->onboarding_completed_at = null;
+        }
+
+        $user->save();
+
+        return redirect()->back();
+    }
+
     public function updateStatus(Request $request, User $user)
     {
         $validated = $request->validate([
@@ -348,7 +381,7 @@ class UserController extends Controller
     public function impersonate(User $user)
     {
         $token = ImpersonationToken::create([
-            'admin_id' => auth()->id(),
+            'admin_id' => auth()->guard('admin')->id(),
             'user_id' => $user->id,
             'token' => Str::random(64),
             'expires_at' => now()->addMinutes(15),
