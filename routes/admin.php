@@ -17,6 +17,9 @@ Route::middleware('guest:admin')->group(function () {
     Route::redirect('/', '/admin/login');
     Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
     Route::post('/login', [AuthenticatedSessionController::class, 'store'])->name('login.store');
+
+    Route::get('/reset-password/{token}', [\App\Http\Controllers\Admin\Auth\NewPasswordController::class, 'create'])->name('password.reset');
+    Route::post('/reset-password', [\App\Http\Controllers\Admin\Auth\NewPasswordController::class, 'store'])->name('password.store');
 });
 
 Route::middleware('auth:admin')->group(function () {
@@ -38,6 +41,20 @@ Route::middleware('auth:admin')->group(function () {
         Route::post('/{user}/change-subscription', [UserController::class, 'changeSubscription'])->name('change-subscription');
         Route::post('/{user}/reset-post-usage', [UserController::class, 'resetPostUsage'])->name('reset-post-usage');
         Route::post('/{user}/internal-note', [UserController::class, 'saveNote'])->name('note');
+    });
+
+    // Admin Users Management
+    Route::prefix('admins')->name('admins.')->middleware('role:super_admin')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\AdminUserController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\Admin\AdminUserController::class, 'store'])->name('store');
+        Route::patch('/{admin}', [\App\Http\Controllers\Admin\AdminUserController::class, 'update'])->name('update');
+        Route::delete('/{admin}', [\App\Http\Controllers\Admin\AdminUserController::class, 'destroy'])->name('destroy');
+    });
+
+    // Admin Roles Management
+    Route::prefix('roles')->name('roles.')->middleware('role:super_admin')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\AdminRoleController::class, 'index'])->name('index');
+        Route::put('/{role}', [\App\Http\Controllers\Admin\AdminRoleController::class, 'update'])->name('update');
     });
 
     // Quotes and Categories removed for now
